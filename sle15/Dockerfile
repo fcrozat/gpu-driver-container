@@ -52,7 +52,7 @@ RUN     zypper --non-interactive install -y libglvnd ca-certificates curl gcc ma
 
 #RUN zypper --non-interactive install -y curl awk tar util-linux-systemd
 
-#RUN curl -fL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
+#RUN curl -f -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
 #    curl -fL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
 #    chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux && \
 #    ln -s /sbin/ldconfig /sbin/ldconfig.real
