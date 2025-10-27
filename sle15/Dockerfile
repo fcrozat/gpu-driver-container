@@ -67,7 +67,10 @@ ADD drivers drivers/
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     cd drivers && \
-    /tmp/install.sh download_installer ; fi
+    curl -f -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run && \
+    chmod +x  NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run; fi
+
+#    /tmp/install.sh download_installer ; fi
 
 RUN /tmp/install.sh extra_pkgs_install
 
