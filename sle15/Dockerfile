@@ -1,6 +1,4 @@
 ARG SLES_VERSION
-FROM nvcr.io/nvidia/cuda:13.0.1-base-ubi8 as license
-
 FROM registry.suse.com/bci/golang:1.25 as build
 
 ARG TARGETARCH
@@ -86,6 +84,6 @@ LABEL summary="Provision the NVIDIA driver through containers"
 LABEL description="See summary"
 
 # Add NGC DL license from the CUDA image
-COPY --from=license /NGC-DL-CONTAINER-LICENSE /licenses/NGC-DL-CONTAINER-LICENSE
+RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE 
 
 ENTRYPOINT ["nvidia-driver", "init"]
