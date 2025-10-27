@@ -52,8 +52,8 @@ RUN     zypper --non-interactive install -y libglvnd ca-certificates curl gcc ma
 
 #RUN zypper --non-interactive install -y curl awk tar util-linux-systemd
 
-#RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
-#    curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
+#RUN curl -fsL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
+#    curl -fsL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
 #    chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux && \
 #    ln -s /sbin/ldconfig /sbin/ldconfig.real
 
@@ -90,6 +90,6 @@ LABEL summary="Provision the NVIDIA driver through containers"
 LABEL description="See summary"
 
 # Add NGC DL license from the CUDA image
-RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE 
+RUN mkdir /licenses && curl -fsL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE 
 
 ENTRYPOINT ["nvidia-driver", "init"]
