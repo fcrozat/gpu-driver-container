@@ -44,7 +44,7 @@ ENV NVIDIA_VISIBLE_DEVICES=void
 
 RUN echo "TARGETARCH=$TARGETARCH"
 
-ADD --chmod 755 install.sh /tmp/
+ADD --chmod=755 install.sh /tmp/
 
 RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
 
