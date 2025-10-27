@@ -46,7 +46,9 @@ RUN echo "TARGETARCH=$TARGETARCH"
 
 ADD --chmod=755 install.sh /tmp/
 
-RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
+#RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
+RUN     zypper --non-interactive install -y libglvnd ca-certificates curl gcc make cpio kmod jq
+
 
 #RUN zypper --non-interactive install -y curl awk tar util-linux-systemd
 
