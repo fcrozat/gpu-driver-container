@@ -1,6 +1,9 @@
 # Defines the tag for OBS and build script builds:
 #!BuildTag: nvidia/gpu-driver-container:latest
 
+#!RemoteAssetUrl: https://us.download.nvidia.com/tesla/580.95.05/NVIDIA-Linux-x86_64-580.95.05.run
+
+
 #
 ARG SLES_VERSION
 FROM registry.suse.com/bci/golang:1.25 as build
@@ -67,7 +70,7 @@ ADD drivers drivers/
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     cd drivers && \
-    curl -f -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$TARGETARCH-$DRIVER_VERSION.run && \
+#    curl -f -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$TARGETARCH-$DRIVER_VERSION.run && \
     chmod +x  NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run; fi
 
 #    /tmp/install.sh download_installer ; fi
