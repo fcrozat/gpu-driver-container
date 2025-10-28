@@ -24,15 +24,15 @@ RUN if [ "$DRIVER_TYPE" = "vgpu" ]; then \
 FROM registry.suse.com/suse/sle15:$SLES_VERSION
 
 ARG BASE_URL=https://us.download.nvidia.com/tesla
-ARG TARGETARCH
+ARG TARGETARCH=x86_64
 ENV TARGETARCH=$TARGETARCH
-ARG DRIVER_VERSION
+ARG DRIVER_VERSION=580.95.05
 ENV DRIVER_VERSION=$DRIVER_VERSION
 
 # Arg to indicate if driver type is either of passthrough(baremetal) or vgpu
 ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
-ARG DRIVER_BRANCH=550
+ARG DRIVER_BRANCH=580
 ENV DRIVER_BRANCH=$DRIVER_BRANCH
 ARG VGPU_LICENSE_SERVER_TYPE=NLS
 ENV VGPU_LICENSE_SERVER_TYPE=$VGPU_LICENSE_SERVER_TYPE
@@ -67,7 +67,7 @@ ADD drivers drivers/
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     cd drivers && \
-    curl -f -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run && \
+    curl -f -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$TARGETARCH-$DRIVER_VERSION.run && \
     chmod +x  NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run; fi
 
 #    /tmp/install.sh download_installer ; fi
