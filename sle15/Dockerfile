@@ -67,7 +67,9 @@ COPY nvidia-driver /usr/local/bin
 
 ADD drivers drivers/
 
-COPY NVIDIA-Linux-$TARGETARCH-$DRIVER_VERSION.run drivers
+ENV DRIVER_ARCH=${TARGETARCH/amd64/x86_64}
+
+COPY NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run drivers
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     cd drivers && \
