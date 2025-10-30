@@ -2,8 +2,11 @@
 
 set -eu
 
+DRIVER_ARCH=${TARGETARCH/amd64/x86_64} && DRIVER_ARCH=${DRIVER_ARCH/arm64/aarch64}
+echo "DRIVER_ARCH is $DRIVER_ARCH"
+
 download_installer () {
-    DRIVER_ARCH=${TARGETARCH/amd64/x86_64} && DRIVER_ARCH=${DRIVER_ARCH/arm64/aarch64} && curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run && \
+    curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run && \
     chmod +x  NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run;
 }
 

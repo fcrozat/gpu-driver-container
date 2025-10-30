@@ -48,12 +48,12 @@ ADD --chmod=755 install.sh /tmp/
 
 RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
 
-#RUN zypper --non-interactive install -y curl awk tar util-linux-systemd
+RUN zypper --non-interactive install -y curl awk tar util-linux-systemd
 
-#RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
-#    curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
-#    chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux && \
-#    ln -s /sbin/ldconfig /sbin/ldconfig.real
+RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
+    curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
+    chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux && \
+    ln -s /sbin/ldconfig /sbin/ldconfig.real
 
 
 COPY nvidia-driver /usr/local/bin
