@@ -11,7 +11,7 @@ ARG TARGETARCH
 ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
 
-RUN zypper --non-interactive install -y git-core wget tar gzip
+RUN zypper --gpg-auto-import-keys --non-interactive install -y git-core wget tar gzip
 
 WORKDIR /work
 
@@ -46,9 +46,10 @@ RUN echo "TARGETARCH=$TARGETARCH"
 
 ADD --chmod=755 install.sh /tmp/
 
+RUN zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd
+
 RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
 
-RUN zypper --non-interactive install -y curl awk tar util-linux-systemd
 
 RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
     curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
