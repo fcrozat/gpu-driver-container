@@ -23,6 +23,7 @@ RUN if [ "$DRIVER_TYPE" = "vgpu" ]; then \
 
 FROM registry.suse.com/suse/sle15:$SLES_VERSION
 
+#ARG BASE_URL=http://us.download.nvidia.com/XFree86/Linux-x86_64
 ARG BASE_URL=https://us.download.nvidia.com/tesla
 ARG TARGETARCH
 ENV TARGETARCH=$TARGETARCH
