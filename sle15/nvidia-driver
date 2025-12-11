@@ -591,6 +591,7 @@ _prepare_exclusive() {
 }
 
 _build() {
+    _update_ca_certificates
     # Install dependencies
     if _kernel_requires_package; then
         _update_package_cache
@@ -619,7 +620,6 @@ _load() {
 
 init() {
     _prepare_exclusive
-    _update_ca_certificates
     _build
 
     _load
