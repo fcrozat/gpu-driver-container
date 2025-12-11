@@ -38,6 +38,12 @@ _cleanup_package_cache() {
     fi
 }
 
+_update_ca_certificates() {
+    if [ ! -z "$(ls -A /etc/pki/trust/anchors)" ]; then
+        update-ca-certificates
+    fi
+}
+
 # Resolve the kernel version to the form major.minor.patch-revision-flavor.
 _resolve_kernel_version() {
     echo "Resolving Linux kernel version..."
@@ -613,7 +619,7 @@ _load() {
 
 init() {
     _prepare_exclusive
-
+    _update_ca_certificates
     _build
 
     _load
