@@ -69,7 +69,7 @@ ADD drivers drivers/
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     zypper --gpg-auto-import-keys --non-interactive ref && \
-    zypper  --non-interactive in -C "nvidia-gfxG06-kmp-default= ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} && \
+    zypper  --non-interactive in -C "nvidia-gfxG06-kmp-default = ${DRIVER_VERSION}" kernel-firmware-nvidia && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
     rm -rf "$dir"; \
@@ -79,6 +79,7 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     ; fi
 
 #RUN /tmp/install.sh extra_pkgs_install
+RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION}
 
 RUN zypper removerepo cuda-sles15
 
