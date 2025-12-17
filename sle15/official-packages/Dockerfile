@@ -41,13 +41,12 @@ ARG DISABLE_VGPU_VERSION_CHECK=true
 ENV DISABLE_VGPU_VERSION_CHECK=$DISABLE_VGPU_VERSION_CHECK
 # Avoid dependency of container-toolkit for driver container
 ENV NVIDIA_VISIBLE_DEVICES=void
-ARG ADDITIONAL_MODULES=SLE-15-SP7-Desktop-NVIDIA-Driver
-ENV ADDITIONAL_MODULES=$ADDITIONAL_MODULES
+#ARG ADDITIONAL_MODULES=sle-module-NVIDIA-compute
+#ENV ADDITIONAL_MODULES=$ADDITIONAL_MODULES
 
 RUN echo "TARGETARCH=$TARGETARCH"
 
-
-RUN zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd
+RUN zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd
 
 #RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
 
@@ -69,7 +68,7 @@ ADD drivers drivers/
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     zypper --gpg-auto-import-keys --non-interactive ref && \
-    zypper  --non-interactive in -C "nvidia-gfxG06-kmp-default = ${DRIVER_VERSION}" kernel-firmware-nvidia && \
+    zypper  --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" kernel-firmware-nvidia && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
     rm -rf "$dir"; \
