@@ -615,7 +615,7 @@ _prepare_exclusive() {
 
 _build() {
     mkdir -p /run/nvidia/driver/
-    cp -fr /lib/firmware/* /run/nvidia/driver/
+    cp -fr /opt/lib/firmware /run/nvidia/driver/
     return 0
     # Install dependencies
     if _kernel_requires_package; then
