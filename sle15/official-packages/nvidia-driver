@@ -259,7 +259,7 @@ _load_driver() {
     echo "Parsing kernel module parameters..."
     _get_module_params
 
-    local nv_fw_search_path="$RUN_DIR/driver/lib/firmware"
+    local nv_fw_search_path="$RUN_DIR/driver/opt/lib/firmware"
     local set_fw_path="true"
     local fw_path_config_file="/sys/module/firmware_class/parameters/path"
     for param in "${NVIDIA_MODULE_PARAMS[@]}"; do
@@ -614,8 +614,6 @@ _prepare_exclusive() {
 }
 
 _build() {
-    mkdir -p /run/nvidia/driver/
-    cp -fr /opt/lib/firmware /run/nvidia/driver/
     return 0
     # Install dependencies
     if _kernel_requires_package; then
