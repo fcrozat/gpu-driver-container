@@ -62,8 +62,6 @@ COPY nvidia-driver /usr/local/bin
 #COPY --from=build /work/vgpu-util* /usr/local/bin
 
 ADD drivers drivers/
-# zypper --non-interactive ar https://download.nvidia.com/opensuse/sle15sp7 nvidia-gfx && \
-# cd drivers && \
 
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
@@ -77,8 +75,7 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     mkdir -p /opt/lib && mv /lib/modules /opt/lib && mv /lib/firmware /opt/lib \
     ; fi
 
-#RUN /tmp/install.sh extra_pkgs_install
-RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION}
+RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
 RUN mv /lib/firmware /opt/lib
 
 RUN zypper removerepo cuda-sles15
