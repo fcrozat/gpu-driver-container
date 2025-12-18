@@ -74,7 +74,7 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     rm -rf "$dir"; \
     fi \
     done && \
-    mkdir -p /opt/lib && mv /lib/modules /opt/lib \
+    mkdir -p /opt/lib && mv /lib/modules /opt/lib && mv /lib/firmware /opt/lib \
     ; fi
 
 #RUN /tmp/install.sh extra_pkgs_install
