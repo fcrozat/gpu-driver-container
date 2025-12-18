@@ -614,6 +614,8 @@ _prepare_exclusive() {
 }
 
 _build() {
+    mkdir -p /run/nvidia/driver/
+    cp -fr /lib/firmware/* /run/nvidia/driver/
     return 0
     # Install dependencies
     if _kernel_requires_package; then
@@ -656,7 +658,7 @@ init() {
 
 #    _update_ca_certificates
 
-#    _build
+    _build
     _merge_opt_modules
 
     _load
@@ -665,8 +667,7 @@ init() {
 build() {
 #    _prepare
 
-#    _build
-     return 0
+    _build
 }
 
 load() {
