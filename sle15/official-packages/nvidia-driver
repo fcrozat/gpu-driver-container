@@ -455,7 +455,6 @@ _mount_rootfs() {
     mount --rbind / ${RUN_DIR}/driver
 
     cp -rf /opt/lib/firmware/* /lib/firmware/
-    sync
 
     echo "Check SELinux status"
     if [ -e /sys/fs/selinux ]; then
