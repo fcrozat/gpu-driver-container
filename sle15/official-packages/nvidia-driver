@@ -454,7 +454,7 @@ _mount_rootfs() {
     mkdir -p ${RUN_DIR}/driver
     mount --rbind / ${RUN_DIR}/driver
 
-    cp -rf /opt/lib/firmware/* /lib/firmware/
+    cp -rfx /opt/lib/firmware/* /lib/firmware/
 
     echo "Check SELinux status"
     if [ -e /sys/fs/selinux ]; then
@@ -632,9 +632,9 @@ _build() {
 
 _merge_opt_modules() {
     local current_kernel=$(uname -r)
-    cp -rf /run/host/lib/modules/${current_kernel} /opt/lib/modules
+    cp -rfx /run/host/lib/modules/${current_kernel} /opt/lib/modules
     mkdir -p /opt/lib/modules/${current_kernel}/updates
-    cp -f /opt/lib/modules/*/updates/* /opt/lib/modules/${current_kernel}/updates
+    cp -fx /opt/lib/modules/*/updates/* /opt/lib/modules/${current_kernel}/updates
     # do not ship drm driver
     rm /opt/lib/modules/${current_kernel}/updates/nvidia-drm.*
     mkdir -p /lib/modules/
