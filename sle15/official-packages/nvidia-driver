@@ -637,6 +637,7 @@ _merge_opt_modules() {
     cp -f /opt/lib/modules/*/updates/* /opt/lib/modules/${current_kernel}/updates
     # do not ship drm driver
     rm /opt/lib/modules/${current_kernel}/updates/nvidia-drm.*
+    cp -fr /opt/lib/modules/* /lib/modules/
     depmod -a -b /opt
 }
 
