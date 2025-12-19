@@ -72,11 +72,11 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     rm -rf "$dir"; \
     fi \
     done && \
-    mkdir -p /opt/lib && mv /lib/modules /opt/lib && mv /lib/firmware /opt/lib \
+    mkdir -p /opt/lib && mv /lib/modules /opt/lib \
     ; fi
 
 RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
-RUN mv /lib/firmware /opt/lib
+RUN cp -r /lib/firmware /opt/lib
 
 RUN zypper removerepo cuda-sles15
 
