@@ -454,6 +454,9 @@ _mount_rootfs() {
     mkdir -p ${RUN_DIR}/driver
     mount --rbind / ${RUN_DIR}/driver
 
+    cp -rf /opt/lib/firmware/* /lib/firmware/
+    sync
+
     echo "Check SELinux status"
     if [ -e /sys/fs/selinux ]; then
         echo "SELinux is enabled"
