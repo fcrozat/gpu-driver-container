@@ -279,14 +279,14 @@ _load_driver() {
     fi
 
     echo "Loading ipmi and i2c_core kernel modules..."
-    modprobe -a i2c_core ipmi_msghandler ipmi_devintf
+    modprobe -d /opt -a i2c_core ipmi_msghandler ipmi_devintf
 
 
     echo "Loading NVIDIA driver kernel modules..."
     set -o xtrace +o nounset
-    modprobe nvidia "${NVIDIA_MODULE_PARAMS[@]}"
-    modprobe nvidia-uvm "${NVIDIA_UVM_MODULE_PARAMS[@]}"
-    modprobe nvidia-modeset "${NVIDIA_MODESET_MODULE_PARAMS[@]}"
+    modprobe -d /opt nvidia "${NVIDIA_MODULE_PARAMS[@]}"
+    modprobe -d /opt nvidia-uvm "${NVIDIA_UVM_MODULE_PARAMS[@]}"
+    modprobe -d /opt nvidia-modeset "${NVIDIA_MODESET_MODULE_PARAMS[@]}"
     set +o xtrace -o nounset
 
     echo "Starting NVIDIA persistence daemon..."
@@ -632,12 +632,14 @@ _build() {
 
 _merge_opt_modules() {
     local current_kernel=$(uname -r)
-    cp -rf /run/host/lib/modules/${current_kernel} /lib/modules
-    mkdir -p /lib/modules/${current_kernel}/updates
-    cp -f /opt/lib/modules/*/updates/* /lib/modules/${current_kernel}/updates
+    cp -rf /run/host/lib/modules/${current_kernel} /opt/lib/modules
+    mkdir -p /opt/lib/modules/${current_kernel}/updates
+    cp -f /opt/lib/modules/*/updates/* /opt/lib/modules/${current_kernel}/updates
     # do not ship drm driver
-    rm /lib/modules/${current_kernel}/updates/nvidia-drm.*
-    depmod -a
+    rm /opt/lib/modules/${current_kernel}/updates/nvidia-drm.*
+    mkdir -p /lib/modules/
+    cp -frx /opt/lib/modules/${current_kernel} /lib/modules/
+    depmod -a -b /opt
 }
 
 _load() {
@@ -744,7 +746,7 @@ reload_nvidia_peermem() {
     fi
     # get any parameters provided for nvidia-peermem
     _get_module_params && set +o nounset
-    if chroot /run/nvidia/driver modprobe nvidia-peermem "${NVIDIA_PEERMEM_MODULE_PARAMS[@]}"; then
+    if chroot /run/nvidia/driver modprobe -d /opt nvidia-peermem "${NVIDIA_PEERMEM_MODULE_PARAMS[@]}"; then
         if [ -f /sys/module/nvidia_peermem/refcnt ]; then
             echo "successfully loaded nvidia-peermem module, now waiting for signal"
             sleep inf
