@@ -93,6 +93,30 @@ RUN ZYPP_CONF=/tmp/scratch-zypp.conf zypper --non-interactive --disable-system-r
 
 FROM registry.suse.com/bci/bci-minimal:$SLES_VERSION
 
+
+#ARG BASE_URL=http://us.download.nvidia.com/XFree86/Linux-x86_64
+ARG TARGETARCH
+ENV TARGETARCH=$TARGETARCH
+ARG DRIVER_VERSION
+ENV DRIVER_VERSION=$DRIVER_VERSION
+
+# Arg to indicate if driver type is either of passthrough(baremetal) or vgpu
+ARG DRIVER_TYPE=passthrough
+ENV DRIVER_TYPE=$DRIVER_TYPE
+ARG DRIVER_BRANCH=550
+ENV DRIVER_BRANCH=$DRIVER_BRANCH
+ARG KERNEL_MODULE_TYPE=auto
+ENV KERNEL_MODULE_TYPE=$KERNEL_MODULE_TYPE
+ARG VGPU_LICENSE_SERVER_TYPE=NLS
+ENV VGPU_LICENSE_SERVER_TYPE=$VGPU_LICENSE_SERVER_TYPE
+# Enable vGPU version compability check by default
+ARG DISABLE_VGPU_VERSION_CHECK=true
+ENV DISABLE_VGPU_VERSION_CHECK=$DISABLE_VGPU_VERSION_CHECK
+# Avoid dependency of container-toolkit for driver container
+ENV NVIDIA_VISIBLE_DEVICES=void
+#ARG ADDITIONAL_MODULES=sle-module-NVIDIA-compute
+#ENV ADDITIONAL_MODULES=$ADDITIONAL_MODULES
+
 WORKDIR /tmp/
 COPY --from=driver /var/cache/rpms/ .
 COPY --from=driver /opt /opt
