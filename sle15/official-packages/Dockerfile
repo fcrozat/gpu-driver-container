@@ -21,6 +21,28 @@ RUN if [ "$DRIVER_TYPE" = "vgpu" ]; then \
     go build -o vgpu-util && \
     mv vgpu-util /work; fi
 
+FROM registry.suse.com/suse/sle15:$SLES_VERSION as driver
+ARG DRIVER_VERSION
+ENV DRIVER_VERSION=$DRIVER_VERSION
+
+RUN zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd
+
+RUN zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
+    for dir in /lib/modules/*; do \
+    if [ -d "$dir/weak-updates" ]; then \
+    rm -rf "$dir"; \
+    fi \
+    done && \
+    mkdir -p /opt/lib/open && mv /lib/modules /opt/open && \
+    zypper --non-interactive rm nvidia-open-driver-G06-signed-cuda-kmp-default && \
+    zypper --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
+    for dir in /lib/modules/*; do \
+    if [ -d "$dir/weak-updates" ]; then \
+    rm -rf "$dir"; \
+    fi \
+    done && \
+    mkdir -p /opt/lib/proprietary && mv /lib/modules /opt/proprietary
+
 FROM registry.suse.com/suse/sle15:$SLES_VERSION
 
 #ARG BASE_URL=http://us.download.nvidia.com/XFree86/Linux-x86_64
@@ -65,28 +87,30 @@ COPY nvidia-driver /usr/local/bin
 
 ADD drivers drivers/
 
+COPY --from=driver /opt /opt
+
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
-RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
-    zypper --gpg-auto-import-keys --non-interactive ref && \
-    #    zypper  --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
-    zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
-    for dir in /lib/modules/*; do \
-    if [ -d "$dir/weak-updates" ]; then \
-    rm -rf "$dir"; \
-    fi \
-    done && \
-    mkdir -p /opt/lib/open && mv /lib/modules /opt/open && \
-    zypper --non-interactive rm nvidia-open-driver-G06-signed-cuda-kmp-default && \
-    zypper --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
-    for dir in /lib/modules/*; do \
-    if [ -d "$dir/weak-updates" ]; then \
-    rm -rf "$dir"; \
-    fi \
-    done && \
-    mkdir -p /opt/lib/proprietary && mv /lib/modules /opt/proprietary && \
-    rpm -e nvidia-driver-G06-kmp-default && \
-    rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd \
-    ; fi
+#RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
+# zypper --gpg-auto-import-keys --non-interactive ref && \
+# #    zypper  --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
+# zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
+# for dir in /lib/modules/*; do \
+# if [ -d "$dir/weak-updates" ]; then \
+# rm -rf "$dir"; \
+# fi \
+# done && \
+# mkdir -p /opt/lib/open && mv /lib/modules /opt/open && \
+# zypper --non-interactive rm nvidia-open-driver-G06-signed-cuda-kmp-default && \
+# zypper --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
+# for dir in /lib/modules/*; do \
+# if [ -d "$dir/weak-updates" ]; then \
+# rm -rf "$dir"; \
+# fi \
+# done && \
+# mkdir -p /opt/lib/proprietary && mv /lib/modules /opt/proprietary && \
+# rpm -e nvidia-driver-G06-kmp-default && \
+# rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd dbus-1 elfutils file iputils kbd kernel-default-devel libapparmor1 libcryptsetup12 libip4tc2 libkcapi-tools libseccomp2 mokutil pam-config pciutils pigz system-group-kvm systemd-default-settings systemd-default-settings-branding-SLE \
+# ; fi
 
 RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
 RUN cp -r /lib/firmware /opt/lib
