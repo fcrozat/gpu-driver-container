@@ -25,7 +25,7 @@ FROM registry.suse.com/suse/sle15:$SLES_VERSION as driver
 ARG DRIVER_VERSION
 ENV DRIVER_VERSION=$DRIVER_VERSION
 
-RUN zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd
+RUN zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref
 
 RUN zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
@@ -70,7 +70,7 @@ ENV NVIDIA_VISIBLE_DEVICES=void
 
 RUN echo "TARGETARCH=$TARGETARCH"
 
-RUN zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd
+RUN zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod
 
 #RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
 
