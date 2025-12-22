@@ -75,7 +75,7 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     rm -rf "$dir"; \
     fi \
     done && \
-    mkdir -p /opt/lib/open && mv /lib/modules /opt/lib/open && \
+    mkdir -p /opt/lib/open && mv /lib/modules /opt/open && \
     zypper --non-interactive rm nvidia-open-driver-G06-signed-cuda-kmp-default && \
     zypper --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
@@ -83,7 +83,7 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     rm -rf "$dir"; \
     fi \
     done && \
-    mkdir -p /opt/lib/proprietary && mv /lib/modules /opt/lib/proprietary && \
+    mkdir -p /opt/lib/proprietary && mv /lib/modules /opt/proprietary && \
     rpm -e nvidia-driver-G06-kmp-default && \
     rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd \
     ; fi
@@ -91,7 +91,7 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
 RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
 RUN cp -r /lib/firmware /opt/lib
 
-RUN ln -s /opt/lib/open /opt/lib/modules
+RUN ln -s /opt/open /opt/lib/modules
 
 RUN zypper removerepo cuda-sles15
 
