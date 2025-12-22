@@ -116,7 +116,8 @@ RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-
     rpm -e --nodeps systemd dbus-1 kbd libapparmor1 libip4tc2 libkmod2 libseccomp2 pam-config pkg-config systemd-default-settings libdbus-1-3 libexpat1 systemd-default-settings-branding-SLE systemd-presets-branding-SLE systemd-presets-common-SUSE
 RUN cp -r /lib/firmware /opt/lib
 
-RUN ln -s /opt/open /opt/lib/modules
+# detection done when container is started
+#RUN ln -s /opt/open /opt/lib/modules
 
 RUN zypper removerepo cuda-sles15
 
