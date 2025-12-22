@@ -286,7 +286,7 @@ _load_driver() {
     local current_kernel=$(uname -r)
     cp -rfx /run/host/lib/modules/${current_kernel} /opt/lib/modules
     mkdir -p /opt/lib/modules/${current_kernel}/updates
-    cp -fx /opt/lib/modules/*/updates/* /opt/lib/modules/${current_kernel}/updates
+    cp -fx /opt/lib/${KERNEL_TYPE}/*/updates/* /opt/lib/modules/${current_kernel}/updates
     # do not ship drm driver
     rm /opt/lib/modules/${current_kernel}/updates/nvidia-drm.*
     mkdir -p /lib/modules/
@@ -527,9 +527,9 @@ _shutdown() {
 # When 'auto' is configured, we use the nvidia-installer to recommend the module type to install.
 _resolve_kernel_type() {
   if [ "${KERNEL_MODULE_TYPE}" == "proprietary" ]; then
-    KERNEL_TYPE=kernel
+    KERNEL_TYPE=proprietary
   elif [ "${KERNEL_MODULE_TYPE}" == "open" ]; then
-    KERNEL_TYPE=kernel-open
+    KERNEL_TYPE=open
   elif [ "${KERNEL_MODULE_TYPE}" == "auto" ]; then
     kernel_module_type=$(nvidia-installer --print-recommended-kernel-module-type)
     if [ $? -ne 0 ]; then
@@ -537,7 +537,7 @@ _resolve_kernel_type() {
       _resolve_kernel_type_from_driver_branch
       return 0
     fi
-    [[ "${kernel_module_type}" == "open" ]] && KERNEL_TYPE=kernel-open || KERNEL_TYPE=kernel
+    [[ "${kernel_module_type}" == "open" ]] && KERNEL_TYPE=open || KERNEL_TYPE=proprietary
   else
     echo "invalid value for the KERNEL_MODULE_TYPE variable: ${KERNEL_MODULE_TYPE}"
     return 1
@@ -545,7 +545,7 @@ _resolve_kernel_type() {
 }
 
 _resolve_kernel_type_from_driver_branch() {
-  [[ "${DRIVER_BRANCH}" -lt 560 ]] && KERNEL_TYPE=kernel || KERNEL_TYPE=kernel-open
+  [[ "${DRIVER_BRANCH}" -lt 560 ]] && KERNEL_TYPE=proprietary || KERNEL_TYPE=open
 }
 
 _find_vgpu_driver_version() {
@@ -594,22 +594,8 @@ _prepare() {
     if [ "${DRIVER_TYPE}" = "vgpu" ]; then
         _find_vgpu_driver_version || exit 1
     fi
-
-    # Install the userspace components and copy the kernel module sources.
-    sh NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run -x && \
-        cd NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION && \
-        sh /tmp/install.sh nvinstall
-
     # Determine the kernel module type
     _resolve_kernel_type || exit 1
-
-    # Copy the kernel module sources
-        mkdir -p /usr/src/nvidia-$DRIVER_VERSION && \
-        mv LICENSE mkprecompiled ${KERNEL_TYPE} /usr/src/nvidia-$DRIVER_VERSION && \
-        sed '9,${/^\(kernel\|LICENSE\)/!d}' .manifest > /usr/src/nvidia-$DRIVER_VERSION/.manifest
-
-    echo -e "\n========== NVIDIA Software Installer ==========\n"
-    echo -e "Starting installation of NVIDIA driver version ${DRIVER_VERSION} for Linux kernel version ${KERNEL_VERSION}\n"
 }
 
 _prepare_exclusive() {
@@ -645,10 +631,12 @@ _load() {
 }
 
 init() {
+    _prepare_exclusive
     _load
 }
 
 load() {
+    _prepare
     _load
 }
 
