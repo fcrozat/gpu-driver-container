@@ -21,7 +21,7 @@ RUN if [ "$DRIVER_TYPE" = "vgpu" ]; then \
     go build -o vgpu-util && \
     mv vgpu-util /work; fi
 
-FROM registry.suse.com/suse/sle15:$SLES_VERSION as driver
+FROM registry.suse.com/suse/sle15:$SLES_VERSION
 
 #ARG BASE_URL=http://us.download.nvidia.com/XFree86/Linux-x86_64
 ARG TARGETARCH
@@ -75,57 +75,14 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     rm -rf "$dir"; \
     fi \
     done && \
-    mkdir -p /opt/lib && mv /lib/modules /opt/lib \
+    mkdir -p /opt/lib && mv /lib/modules /opt/lib && \
+    rpm -e --nodeps kernel-default \
     ; fi
 
 RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
 RUN cp -r /lib/firmware /opt/lib
 
-#RUN zypper removerepo cuda-sles15
-# Add NGC DL license from the CUDA image
-WORKDIR /drivers
-
-RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE
-
-
-COPY scratch-zypp.conf /tmp/
-RUN ZYPP_CONF=/tmp/scratch-zypp.conf zypper --non-interactive --disable-system-resolvables in -f --download-only --no-recommends kmod && mkdir -p /var/cache/rpms && find /var/cache -name '*.rpm' -exec mv -t /var/cache/rpms/ {} + && rm -f /var/cache/rpms/rpm-*.rpm
-
-FROM registry.suse.com/bci/bci-minimal:$SLES_VERSION
-
-
-#ARG BASE_URL=http://us.download.nvidia.com/XFree86/Linux-x86_64
-ARG TARGETARCH
-ENV TARGETARCH=$TARGETARCH
-ARG DRIVER_VERSION
-ENV DRIVER_VERSION=$DRIVER_VERSION
-
-# Arg to indicate if driver type is either of passthrough(baremetal) or vgpu
-ARG DRIVER_TYPE=passthrough
-ENV DRIVER_TYPE=$DRIVER_TYPE
-ARG DRIVER_BRANCH=550
-ENV DRIVER_BRANCH=$DRIVER_BRANCH
-ARG KERNEL_MODULE_TYPE=auto
-ENV KERNEL_MODULE_TYPE=$KERNEL_MODULE_TYPE
-ARG VGPU_LICENSE_SERVER_TYPE=NLS
-ENV VGPU_LICENSE_SERVER_TYPE=$VGPU_LICENSE_SERVER_TYPE
-# Enable vGPU version compability check by default
-ARG DISABLE_VGPU_VERSION_CHECK=true
-ENV DISABLE_VGPU_VERSION_CHECK=$DISABLE_VGPU_VERSION_CHECK
-# Avoid dependency of container-toolkit for driver container
-ENV NVIDIA_VISIBLE_DEVICES=void
-#ARG ADDITIONAL_MODULES=sle-module-NVIDIA-compute
-#ENV ADDITIONAL_MODULES=$ADDITIONAL_MODULES
-
-WORKDIR /tmp/
-COPY --from=driver /var/cache/rpms/ .
-COPY --from=driver /opt /opt
-#COPY --from=driver /drivers/licences .
-RUN for i in $(rpm -qa); do rm -f $i.rpm > /dev/null ; done
-RUN rpm -U *.rpm && rm -f *.rpm
-
-COPY nvidia-driver /usr/local/bin
-ADD drivers drivers/
+RUN zypper removerepo cuda-sles15
 
 WORKDIR /drivers
 
@@ -142,5 +99,8 @@ LABEL version="${DRIVER_VERSION}"
 LABEL release="N/A"
 LABEL summary="Provision the NVIDIA driver through containers"
 LABEL description="See summary"
+
+# Add NGC DL license from the CUDA image
+RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE
 
 ENTRYPOINT ["nvidia-driver", "load"]
