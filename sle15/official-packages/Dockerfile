@@ -41,7 +41,7 @@ RUN zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-defa
     rm -rf "$dir"; \
     fi \
     done && \
-    mkdir -p /opt/lib/proprietary && mv /lib/modules /opt/proprietary
+    mkdir -p /opt/proprietary && mv /lib/modules /opt/proprietary
 
 FROM registry.suse.com/suse/sle15:$SLES_VERSION
 
@@ -56,8 +56,6 @@ ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
 ARG DRIVER_BRANCH=550
 ENV DRIVER_BRANCH=$DRIVER_BRANCH
-ARG KERNEL_MODULE_TYPE=auto
-ENV KERNEL_MODULE_TYPE=$KERNEL_MODULE_TYPE
 ARG VGPU_LICENSE_SERVER_TYPE=NLS
 ENV VGPU_LICENSE_SERVER_TYPE=$VGPU_LICENSE_SERVER_TYPE
 # Enable vGPU version compability check by default
