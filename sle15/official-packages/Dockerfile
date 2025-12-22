@@ -75,7 +75,8 @@ RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     rm -rf "$dir"; \
     fi \
     done && \
-    mkdir -p /opt/lib && mv /lib/modules /opt/lib \
+    mkdir -p /opt/lib && mv /lib/modules /opt/lib && \
+    rpm -e --nodeps kernel-default \
     ; fi
 
 RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
