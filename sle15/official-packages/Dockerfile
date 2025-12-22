@@ -69,14 +69,14 @@ ADD drivers drivers/
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     zypper --gpg-auto-import-keys --non-interactive ref && \
     #    zypper  --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
-    zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-kmp-default = ${DRIVER_VERSION}" && \
+    zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
     rm -rf "$dir"; \
     fi \
     done && \
     mkdir -p /opt/lib && mv /lib/modules /opt/lib && \
-    rpm -e --nodeps kernel-default \
+    rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd \
     ; fi
 
 RUN zypper --non-interactive in "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
@@ -85,7 +85,7 @@ RUN cp -r /lib/firmware /opt/lib
 RUN zypper removerepo cuda-sles15
 
 # cleanup logs and temporary files
-RUN set -euo pipefail; zypper -n --installroot /target clean -a; \
+RUN set -euo pipefail;  zypper -n --installroot /target clean -a; \
     rm -rf {/target,}/var/log/{alternatives.log,lastlog,tallylog,zypper.log,zypp/history,YaST2}; \
     rm -rf {/target,}/run/*; \
     rm -f {/target,}/etc/{shadow-,group-,passwd-,.pwd.lock}; \
