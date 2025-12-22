@@ -34,6 +34,8 @@ ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
 ARG DRIVER_BRANCH=550
 ENV DRIVER_BRANCH=$DRIVER_BRANCH
+ARG KERNEL_MODULE_TYPE=auto
+ENV KERNEL_MODULE_TYPE=$KERNEL_MODULE_TYPE
 ARG VGPU_LICENSE_SERVER_TYPE=NLS
 ENV VGPU_LICENSE_SERVER_TYPE=$VGPU_LICENSE_SERVER_TYPE
 # Enable vGPU version compability check by default
@@ -66,7 +68,8 @@ ADD drivers drivers/
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     zypper --gpg-auto-import-keys --non-interactive ref && \
-    zypper  --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
+    #    zypper  --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
+    zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-kmp-default = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
     rm -rf "$dir"; \
