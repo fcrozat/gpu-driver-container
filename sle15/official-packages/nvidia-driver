@@ -522,12 +522,12 @@ _match_open_driver() {
 
     for pattern in $PATTERNS; do
         if [[ "$HW" == $pattern ]]; then
-            return "open"
-            break
+            echo "open"
+            return
         fi
     done
 
-    return "proprietary"
+    echo "proprietary"
 }
 
 # _resolve_kernel_type determines which kernel module type, open or proprietary, to install.
@@ -543,8 +543,8 @@ _resolve_kernel_type() {
   elif [ "${KERNEL_MODULE_TYPE}" == "open" ]; then
     KERNEL_TYPE=open
   elif [ "${KERNEL_MODULE_TYPE}" == "auto" ]; then
-    kernel_module_type=_match_open_driver()
-    if [ $? -ne 0 ]; then
+    kernel_module_type=$(_match_open_driver)
+    if [ -z "${kernel_module_type}" ]; then
       echo "failed to retrieve the recommended kernel module type from nvidia-installer, falling back to using the driver branch"
       _resolve_kernel_type_from_driver_branch
       return 0
@@ -761,7 +761,7 @@ if [ $# -eq 0 ]; then
 fi
 command=$1; shift
 case "${command}" in
-    init) options=$(getopt -l accept-license -o a: -- "$@") ;;
+    init) options=$(getopt -l accept-license -o a -- "$@") ;;
     load) options="" ;;
     update) options=$(getopt -l kernel:,sign:,tag: -o k:s:t: -- "$@") ;;
     reload_nvidia_peermem) options="" ;;
