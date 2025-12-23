@@ -284,14 +284,11 @@ _load_driver() {
     fi
 
     local current_kernel=$(uname -r)
-    cp -rfx /run/host/lib/modules/${current_kernel} /opt/lib/modules
+    cp -rfx /run/host/lib/modules/${current_kernel} /lib/modules
     mkdir -p /opt/lib/modules/${current_kernel}/updates
-    cp -fx /opt/${KERNEL_TYPE}/* /opt/lib/modules/${current_kernel}/updates
+    cp -fx /opt/${KERNEL_TYPE}/* /lib/modules/${current_kernel}/updates
     # do not ship drm driver
-    rm /opt/lib/modules/${current_kernel}/updates/nvidia-drm.*
-    mkdir -p /lib/modules/
-    cp -frx /opt/lib/modules/${current_kernel} /lib/modules/
-    rm -fr /opt/*
+    rm /lib/modules/${current_kernel}/updates/nvidia-drm.*
     depmod -a
 
     echo "Loading ipmi and i2c_core kernel modules..."
