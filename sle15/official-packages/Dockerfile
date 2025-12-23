@@ -27,7 +27,8 @@ ENV DRIVER_VERSION=$DRIVER_VERSION
 
 RUN zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref
 
-RUN zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
+RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses -f --download-only --no-recommends  nvidia-open-driver-G06-signed-kmp-meta && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver-G06-signed-kmp-meta*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
+    zypper --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
     rm -rf "$dir"; \
@@ -86,6 +87,10 @@ COPY nvidia-driver /usr/local/bin
 ADD drivers drivers/
 
 COPY --from=driver /opt /opt
+
+# get driver into rpmdb to access its modalias list
+COPY --from=driver /var/cache/rpms/*.rpm /tmp
+RUN rpm -Uvh --justdb --nodeps /tmp/*.rpm
 
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 #RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
