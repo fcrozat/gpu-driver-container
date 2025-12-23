@@ -285,7 +285,7 @@ _load_driver() {
 
     local current_kernel=$(uname -r)
     cp -rfx /run/host/lib/modules/${current_kernel} /lib/modules
-    mkdir -p /opt/lib/modules/${current_kernel}/updates
+    mkdir -p /lib/modules/${current_kernel}/updates
     cp -fx /opt/${KERNEL_TYPE}/* /lib/modules/${current_kernel}/updates
     # do not ship drm driver
     rm /lib/modules/${current_kernel}/updates/nvidia-drm.*
