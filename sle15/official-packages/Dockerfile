@@ -33,7 +33,7 @@ RUN zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-defa
     rm -rf "$dir"; \
     fi \
     done && \
-    cp -rfx /lib/modules /opt/open && \
+    cp -rfx /lib/modules/*/updates /opt/open && \
     zypper --non-interactive rm nvidia-open-driver-G06-signed-cuda-kmp-default && \
     zypper --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
@@ -41,7 +41,7 @@ RUN zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-defa
     rm -rf "$dir"; \
     fi \
     done && \
-    cp -rfx /lib/modules /opt/proprietary
+    cp -rfx /lib/modules/*/updates /opt/proprietary
 
 FROM registry.suse.com/suse/sle15:$SLES_VERSION
 
