@@ -25,7 +25,7 @@ FROM registry.suse.com/suse/sle15:$SLES_VERSION as driver
 ARG DRIVER_VERSION
 ENV DRIVER_VERSION=$DRIVER_VERSION
 
-RUN [ -f /usr/local/sbin/obs-docker-support ] || zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref
+#RUN [ -f /usr/local/sbin/obs-docker-support ] || zypper ar https://download.nvidia.com/suse/sle15sp7/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref
 
 RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses -f --download-only --no-recommends  nvidia-open-driver-G06-signed-kmp-meta && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver-G06-signed-kmp-meta*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
     zypper --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
