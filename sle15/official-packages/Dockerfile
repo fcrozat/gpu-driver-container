@@ -26,7 +26,9 @@ ARG SLES_VERSION
 ARG DRIVER_VERSION
 ENV DRIVER_VERSION=$DRIVER_VERSION
 
-RUN [ -f /usr/local/sbin/obs-docker-support ] || zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION/./sp}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref
+# don't add repo on OBS
+#!ArchExcludedLine: x86_64 aarch64 ppc64le
+RUN zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION/./sp}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref
 
 RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
     zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" && \
@@ -71,7 +73,9 @@ ENV NVIDIA_VISIBLE_DEVICES=void
 
 RUN echo "TARGETARCH=$TARGETARCH"
 
-RUN [ -f /usr/local/sbin/obs-docker-support ] || zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION/./sp}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod
+# don't add repo on OBS
+#!ArchExcludedLine: x86_64 aarch64 ppc64le
+RUN zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION/./sp}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod
 
 #RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
 
