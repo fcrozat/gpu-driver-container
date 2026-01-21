@@ -28,7 +28,7 @@ ENV DRIVER_VERSION=$DRIVER_VERSION
 
 RUN [ -f /usr/local/sbin/obs-docker-support ] || zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION/./sp}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref
 
-RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C nvidia-open-signed-kmp = ${DRIVER_VERSION} && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
+RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
     zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
@@ -117,7 +117,7 @@ RUN rpm -Uvh --justdb --nodeps /tmp/*.rpm
 # rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd dbus-1 elfutils file iputils kbd kernel-default-devel libapparmor1 libcryptsetup12 libip4tc2 libkcapi-tools libseccomp2 mokutil pam-config pciutils pigz system-group-kvm systemd-default-settings systemd-default-settings-branding-SLE \
 # ; fi
 
-RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-compute-G06 = ${DRIVER_VERSION}" nvidia-persistenced-${DRIVER_VERSION} "nvidia-compute-utils-G06 = ${DRIVER_VERSION}" && \
+RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-compute-G06 = ${DRIVER_VERSION}" "nvidia-persistenced = ${DRIVER_VERSION}" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}" && \
     rpm -e --nodeps systemd dbus-1 kbd libapparmor1 libip4tc2 libkmod2 libseccomp2 pam-config pkg-config systemd-default-settings libdbus-1-3 libexpat1 systemd-default-settings-branding-SLE systemd-presets-branding-SLE systemd-presets-common-SUSE
 RUN mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/
 
