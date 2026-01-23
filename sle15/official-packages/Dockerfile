@@ -86,7 +86,7 @@ RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/
     ln -s /sbin/ldconfig /sbin/ldconfig.real
 
 
-COPY nvidia-driver /usr/local/bin
+COPY --chmod=755 nvidia-driver /usr/local/bin
 
 #COPY --from=build /work/vgpu-util* /usr/local/bin
 
@@ -155,4 +155,4 @@ LABEL description="See summary"
 # Add NGC DL license from the CUDA image
 RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE
 
-ENTRYPOINT ["nvidia-driver", "load"]
+ENTRYPOINT ["/usr/local/bin/nvidia-driver", "load"]
