@@ -1,5 +1,5 @@
 # Defines the tag for OBS and build script builds:
-#!BuildTag: nvidia/gpu-driver-container:%%DRIVER_VERSION%%-sles%OS_VERSION_ID_SP%
+#!BuildTag: nvidia/driver:%%DRIVER_VERSION%%-sles%OS_VERSION_ID_SP%
 #
 ARG SLES_VERSION
 FROM registry.suse.com/bci/golang:1.25 as build
