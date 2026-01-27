@@ -20,7 +20,7 @@ RUN if [ "$DRIVER_TYPE" = "vgpu" ]; then \
     go build -o vgpu-util && \
     mv vgpu-util /work; fi
 
-FROM registry.suse.com/suse/sle15:$SLES_VERSION as driver
+FROM registry.suse.com/bci/bci-base:$SLES_VERSION as driver
 ARG SLES_VERSION
 ARG DRIVER_VERSION
 ENV DRIVER_VERSION=$DRIVER_VERSION
@@ -47,7 +47,7 @@ RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-l
     done && \
     cp -rfx /lib/modules/*/updates /opt/proprietary
 
-FROM registry.suse.com/suse/sle15:$SLES_VERSION
+FROM registry.suse.com/bci/bci-base:$SLES_VERSION
 
 ARG SLES_VERSION
 #ARG BASE_URL=http://us.download.nvidia.com/XFree86/Linux-x86_64
