@@ -29,7 +29,7 @@ ENV DRIVER_VERSION=$DRIVER_VERSION
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
 RUN SLES_VERSION_SUBSTITUTION="${SLES_VERSION}"; \
     if echo "$SLES_VERSION" | grep -q "^15"; then \
-        SLES_VERSION_SUBSTITUTION="${SLES_VERSION/./sp}"; \
+    SLES_VERSION_SUBSTITUTION="${SLES_VERSION/./sp}"; \
     fi; \
     zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION_SUBSTITUTION}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
 
@@ -81,9 +81,9 @@ RUN echo "TARGETARCH=$TARGETARCH"
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
 RUN SLES_VERSION_SUBSTITUTION="${SLES_VERSION}"; \
     if echo "$SLES_VERSION" | grep -q "^15"; then \
-        SLES_VERSION_SUBSTITUTION="${SLES_VERSION/./sp}"; \
+    SLES_VERSION_SUBSTITUTION="${SLES_VERSION/./sp}"; \
     fi; \
-    zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION_SUBSTITUTION}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod
+    zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION_SUBSTITUTION}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod || true
 
 #RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
 
