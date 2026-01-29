@@ -27,7 +27,11 @@ ENV DRIVER_VERSION=$DRIVER_VERSION
 
 # don't add repo on OBS
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION/./sp}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
+RUN SLES_VERSION_SUBSTITUTION="${SLES_VERSION}"; \
+    if echo "$SLES_VERSION" | grep -q "^15"; then \
+        SLES_VERSION_SUBSTITUTION="${SLES_VERSION/./sp}"; \
+    fi; \
+    zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION_SUBSTITUTION}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
 
 # we need nvidia-open-driver-G06-signed-kmp-meta to get the modalias supplements for open driver
 RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" "nvidia-open-driver-G06-signed-kmp-meta = ${DRIVER_VERSION}" && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
@@ -75,7 +79,11 @@ RUN echo "TARGETARCH=$TARGETARCH"
 
 # don't add repo on OBS
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION/./sp}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod
+RUN SLES_VERSION_SUBSTITUTION="${SLES_VERSION}"; \
+    if echo "$SLES_VERSION" | grep -q "^15"; then \
+        SLES_VERSION_SUBSTITUTION="${SLES_VERSION/./sp}"; \
+    fi; \
+    zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION_SUBSTITUTION}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod
 
 #RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
 
