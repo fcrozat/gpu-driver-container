@@ -10,7 +10,7 @@ ARG TARGETARCH
 ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
 
-RUN zypper --gpg-auto-import-keys --non-interactive install -y git-core wget tar gzip
+RUN zypper --gpg-auto-import-keys --non-interactive install -y git-core wget tar gzip findutils
 
 WORKDIR /work
 
