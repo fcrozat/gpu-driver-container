@@ -1,5 +1,6 @@
 ARG SLES_VERSION
-FROM registry.suse.com/bci/golang:1.25 as build
+ARG GOLANG_VERSION=1.25
+FROM registry.suse.com/bci/golang:${GOLANG_VERSION} as build
 
 ARG TARGETARCH
 
