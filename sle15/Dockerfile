@@ -8,6 +8,7 @@ ARG TARGETARCH
 ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
 
+SHELL ["/bin/bash", "-c"]
 RUN zypper --gpg-auto-import-keys --non-interactive install -y git-core wget tar gzip
 
 WORKDIR /work
@@ -26,12 +27,12 @@ ARG TARGETARCH
 ENV TARGETARCH=$TARGETARCH
 ARG DRIVER_VERSION
 ENV DRIVER_VERSION=$DRIVER_VERSION
+ARG DRIVER_BRANCH
+ENV DRIVER_BRANCH=$DRIVER_BRANCH
 
-# Arg to indicate if driver type is either of passthrough(baremetal) or vgpu
+# Arg to indicate if driver type is either of passthrough/baremetal or vgpu
 ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
-ARG DRIVER_BRANCH=550
-ENV DRIVER_BRANCH=$DRIVER_BRANCH
 ARG VGPU_LICENSE_SERVER_TYPE=NLS
 ENV VGPU_LICENSE_SERVER_TYPE=$VGPU_LICENSE_SERVER_TYPE
 # Enable vGPU version compability check by default
@@ -42,33 +43,31 @@ ENV NVIDIA_VISIBLE_DEVICES=void
 
 RUN echo "TARGETARCH=$TARGETARCH"
 
-ADD --chmod=755 install.sh /tmp/
+ADD install.sh /tmp/
 
 RUN zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd
 
-RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
-
-
-RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
+RUN sh /tmp/install.sh depinstall && \
+    sh /tmp/install.sh setup_cuda_repo && \
+    curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
     curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
     chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux && \
     ln -s /sbin/ldconfig /sbin/ldconfig.real
-
-
-COPY nvidia-driver /usr/local/bin
-
-#COPY --from=build /work/vgpu-util* /usr/local/bin
 
 ADD drivers drivers/
 
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
     cd drivers && \
-    /tmp/install.sh download_installer ; fi
+    sh /tmp/install.sh download_installer ; fi
 
-RUN /tmp/install.sh extra_pkgs_install
+# Fetch the installer, fabricmanager, libnvidia-nscq, libnvsdm, imex packages
+RUN sh /tmp/install.sh extrapkgsinstall
 
-RUN zypper removerepo cuda-sles15
+COPY nvidia-driver /usr/local/bin
+
+#COPY --from=build /work/vgpu-util* /usr/local/bin
+
 
 WORKDIR /drivers
 
@@ -88,5 +87,7 @@ LABEL description="See summary"
 
 # Add NGC DL license from the CUDA image
 RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE
+
+RUN zypper removerepo cuda-sles15
 
 ENTRYPOINT ["nvidia-driver", "init"]

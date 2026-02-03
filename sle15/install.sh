@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 
 set -eu
 
@@ -10,7 +11,7 @@ download_installer () {
     chmod +x  NVIDIA-Linux-$DRIVER_ARCH-$DRIVER_VERSION.run;
 }
 
-dep_install () {
+dep_installer () {
   if [ "$TARGETARCH" = "amd64" ]; then
     zypper --non-interactive install -y \
         libglvnd \
@@ -36,10 +37,7 @@ dep_install () {
   rm -rf /var/cache/zypp/*
 }
 
-setup_cuda_repo() {
-    zypper --non-interactive addrepo https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles15 && \
-    zypper --gpg-auto-import-keys --non-interactive ref
-}
+
 
 fabricmanager_install() {
   if [ "$DRIVER_BRANCH" -ge "580" ]; then
@@ -133,15 +131,18 @@ nvidia_installer () {
   fi
 }
 
-
+setup_cuda_repo() {
+    zypper --non-interactive addrepo https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles15 && \
+    zypper --gpg-auto-import-keys --non-interactive ref
+}
 
 if [ "$1" = "nvinstall" ]; then
   nvidia_installer
 elif [ "$1" = "depinstall" ]; then
-  dep_install
+  dep_installer
 elif [ "$1" = "download_installer" ]; then
   download_installer
-elif [ "$1" = "extra_pkgs_install" ]; then
+elif [ "$1" = "extrapkgsinstall" ]; then
   extra_pkgs_install
 elif [ "$1" = "setup_cuda_repo" ]; then
   setup_cuda_repo
