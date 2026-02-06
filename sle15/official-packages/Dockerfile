@@ -22,19 +22,17 @@ RUN if [ "$DRIVER_TYPE" = "vgpu" ]; then \
 
 FROM registry.suse.com/bci/bci-base:$SLES_VERSION as driver
 ARG SLES_VERSION
+ARG TARGETARCH
+ENV TARGETARCH=$TARGETARCH
 ARG DRIVER_VERSION
 ENV DRIVER_VERSION=$DRIVER_VERSION
 
 # don't add repo on OBS
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN SLES_VERSION_SUBSTITUTION="${SLES_VERSION}"; \
-    if echo "$SLES_VERSION" | grep -q "^15"; then \
-    SLES_VERSION_SUBSTITUTION="${SLES_VERSION/./sp}"; \
-    fi; \
-    zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION_SUBSTITUTION}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
+RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
 
 # we need nvidia-open-driver-G06-signed-kmp-meta to get the modalias supplements for open driver
-RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" "nvidia-open-driver-G06-signed-kmp-meta = ${DRIVER_VERSION}" && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
+RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" "nvidia-open-driver-G06 = ${DRIVER_VERSION}" && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
     zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
@@ -44,6 +42,7 @@ RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-l
     cp -rfx /lib/modules/*/updates /opt/open && \
     zypper --non-interactive rm nvidia-open-signed-kmp && \
     zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
+    dkms  autoinstall -k $(ls -1 /lib/modules/) && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
     rm -rf "$dir"; \
@@ -79,13 +78,9 @@ RUN echo "TARGETARCH=$TARGETARCH"
 
 # don't add repo on OBS
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN SLES_VERSION_SUBSTITUTION="${SLES_VERSION}"; \
-    if echo "$SLES_VERSION" | grep -q "^15"; then \
-    SLES_VERSION_SUBSTITUTION="${SLES_VERSION/./sp}"; \
-    fi; \
-    zypper ar https://download.nvidia.com/suse/sle${SLES_VERSION_SUBSTITUTION}/ nvidia-gfx && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod || true
+RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod || true
 
-#RUN /tmp/install.sh depinstall && /tmp/install.sh setup_cuda_repo
+#RUN /tmp/install.sh depinstall
 
 
 RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
@@ -129,11 +124,11 @@ RUN rpm -Uvh --justdb --nodeps /tmp/*.rpm
 # rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd dbus-1 elfutils file iputils kbd kernel-default-devel libapparmor1 libcryptsetup12 libip4tc2 libkcapi-tools libseccomp2 mokutil pam-config pciutils pigz system-group-kvm systemd-default-settings systemd-default-settings-branding-SLE \
 # ; fi
 
-RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-compute-G06 = ${DRIVER_VERSION}" "nvidia-persistenced = ${DRIVER_VERSION}" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}" && \
+RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-computeG06 = ${DRIVER_VERSION}" "nvidia-persistenced = ${DRIVER_VERSION}" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}" && \
     for pkg in systemd dbus-1 kbd libapparmor1 libip4tc2 libkmod2 libseccomp2 pam-config pkg-config systemd-default-settings libdbus-1-3 libexpat1 systemd-default-settings-branding-SLE systemd-presets-branding-SLE systemd-presets-common-SUSE; do rpm -e --nodeps "$pkg" || true; done
 RUN mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/
 
-RUN zypper removerepo cuda-sles15
+RUN zypper removerepo cuda-sles
 
 # cleanup logs and temporary files
 RUN set -euo pipefail;  zypper -n --installroot /target clean -a; \
