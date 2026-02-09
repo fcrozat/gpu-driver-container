@@ -41,7 +41,7 @@ RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-l
     done && \
     cp -rfx /lib/modules/*/updates /opt/open && \
     zypper --non-interactive rm nvidia-open-signed-kmp && \
-    zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
+    zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" nvidia-driver-assistant && \
     dkms  autoinstall -k $(ls -1 /lib/modules/) && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
@@ -89,13 +89,15 @@ RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/
     ln -s /sbin/ldconfig /sbin/ldconfig.real
 
 
-COPY --chmod=755 nvidia-driver /usr/local/bin
+COPY --chmod=755 nvidia-driver* /usr/local/bin
 
 #COPY --from=build /work/vgpu-util* /usr/local/bin
 
 ADD drivers drivers/
 
 COPY --from=driver /opt /opt
+
+COPY --from=driver /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json
 
 # get driver into rpmdb to access its modalias list
 COPY --from=driver /var/cache/rpms/*.rpm /tmp

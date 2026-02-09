@@ -515,21 +515,6 @@ _shutdown() {
     return 1
 }
 
-_match_open_driver() {
-    HW=$(find /sys/devices -name modalias -exec cat {} + | grep -i 10de | sed -e 's/pci://g')
-
-    PATTERNS=$(rpm -q --supplements nvidia-open-driver-G06-signed-kmp-meta | grep modalias | sed -e 's/.*://g;s/)//g')
-
-    for pattern in $PATTERNS; do
-        if [[ "$HW" == $pattern ]]; then
-            echo "open"
-            return
-        fi
-    done
-
-    echo "proprietary"
-}
-
 # _resolve_kernel_type determines which kernel module type, open or proprietary, to install.
 # This function assumes that the nvidia-installer binary is in the PATH, so this function
 # should only be invoked after the userspace driver components have been installed.
@@ -543,7 +528,7 @@ _resolve_kernel_type() {
   elif [ "${KERNEL_MODULE_TYPE}" == "open" ]; then
     KERNEL_TYPE=open
   elif [ "${KERNEL_MODULE_TYPE}" == "auto" ]; then
-    kernel_module_type=$(_match_open_driver)
+    kernel_module_type=$(/usr/local/bin//nvidia-driver-selector.sh)
     if [ -z "${kernel_module_type}" ]; then
       echo "failed to retrieve the recommended kernel module type from nvidia-installer, falling back to using the driver branch"
       _resolve_kernel_type_from_driver_branch
