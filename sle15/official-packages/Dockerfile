@@ -41,7 +41,7 @@ RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-l
     done && \
     cp -rfx /lib/modules/*/updates /opt/open && \
     zypper --non-interactive rm nvidia-open-signed-kmp && \
-    zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-driver-G06 = ${DRIVER_VERSION}" nvidia-driver-assistant && \
+    zypper --non-interactive in --auto-agree-with-licenses "nvidia-driver-G06 = ${DRIVER_VERSION}" nvidia-driver-assistant && \
     dkms  autoinstall -k $(ls -1 /lib/modules/) && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
@@ -126,7 +126,7 @@ RUN rpm -Uvh --justdb --nodeps /tmp/*.rpm
 # rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd dbus-1 elfutils file iputils kbd kernel-default-devel libapparmor1 libcryptsetup12 libip4tc2 libkcapi-tools libseccomp2 mokutil pam-config pciutils pigz system-group-kvm systemd-default-settings systemd-default-settings-branding-SLE \
 # ; fi
 
-RUN zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-compute-G06 = ${DRIVER_VERSION}" "nvidia-persistenced = ${DRIVER_VERSION}" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}" && \
+RUN zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-compute-G06 = ${DRIVER_VERSION}-1" "nvidia-persistenced = ${DRIVER_VERSION}-1" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}-1" && \
     for pkg in systemd dbus-1 kbd libapparmor1 libip4tc2 libkmod2 libseccomp2 pam-config pkg-config systemd-default-settings libdbus-1-3 libexpat1 systemd-default-settings-branding-SLE systemd-presets-branding-SLE systemd-presets-common-SUSE; do rpm -e --nodeps "$pkg" || true; done
 RUN mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/
 
