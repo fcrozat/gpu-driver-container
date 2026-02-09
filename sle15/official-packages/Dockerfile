@@ -41,7 +41,7 @@ RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-l
     done && \
     cp -rfx /lib/modules/*/updates /opt/open && \
     zypper --non-interactive rm nvidia-open-signed-kmp && \
-    zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" nvidia-driver-assistant && \
+    zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-driver-G06 = ${DRIVER_VERSION}" nvidia-driver-assistant && \
     dkms  autoinstall -k $(ls -1 /lib/modules/) && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
