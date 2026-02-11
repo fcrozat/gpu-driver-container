@@ -26,11 +26,11 @@ ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
 
 
-FROM nvidia/driver-open:$DRIVER_VERSION-sles${SLES_VERSION} as driver-open
+FROM localhost/nvidia/driver-open:$DRIVER_VERSION-sles${SLES_VERSION} as driver-open
 
 
 ARG DRIVER_VERSION
-FROM nvidia/driver-closed:$DRIVER_VERSION-sles$SLES_VERSION as driver-closed
+FROM localhost/nvidia/driver-closed:$DRIVER_VERSION-sles$SLES_VERSION as driver-closed
 
 
 ARG SLES_VERSION
