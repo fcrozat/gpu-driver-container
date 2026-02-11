@@ -1,0 +1,19 @@
+# Defines the tag for OBS and build script builds:
+#!BuildTag: nvidia/driver-open:%%DRIVER_VERSION%%-sles%OS_VERSION_ID_SP%
+#
+ARG SLES_VERSION
+
+FROM registry.suse.com/bci/bci-base:$SLES_VERSION as driver
+ARG SLES_VERSION
+
+ARG DRIVER_VERSION
+ENV DRIVER_VERSION=$DRIVER_VERSION
+
+
+RUN zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-open-driver-G06 = ${DRIVER_VERSION}" && \
+    for dir in /lib/modules/*; do \
+    if [ -d "$dir/weak-updates" ]; then \
+    rm -rf "$dir"; \
+    fi \
+    done && \
+    cp -rfx /lib/modules/*/updates /opt/open

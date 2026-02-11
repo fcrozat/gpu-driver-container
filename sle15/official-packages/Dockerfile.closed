@@ -1,0 +1,24 @@
+# Defines the tag for OBS and build script builds:
+#!BuildTag: nvidia/driver-cuda-closed:%%DRIVER_VERSION%%-sles%OS_VERSION_ID_SP%
+#
+ARG SLES_VERSION
+
+FROM registry.suse.com/bci/bci-base:$SLES_VERSION as driver
+ARG TARGETARCH
+ENV TARGETARCH=$TARGETARCH
+ARG DRIVER_VERSION
+ENV DRIVER_VERSION=$DRIVER_VERSION
+
+# don't add repo on OBS
+#!ArchExcludedLine: x86_64 aarch64 ppc64le
+RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
+
+RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-driver-G06 = ${DRIVER_VERSION}" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}" dkms && \
+    dkms  autoinstall -k $(ls -1 /lib/modules/) && \
+    for dir in /lib/modules/*; do \
+    if [ -d "$dir/weak-updates" ]; then \
+    rm -rf "$dir"; \
+    fi \
+    done && \
+    cp -rfx /lib/modules/*/updates /opt/proprietary
+

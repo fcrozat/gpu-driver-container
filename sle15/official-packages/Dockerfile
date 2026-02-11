@@ -1,59 +1,42 @@
 # Defines the tag for OBS and build script builds:
-#!BuildTag: nvidia/driver:%%DRIVER_VERSION%%-sles%OS_VERSION_ID_SP%
+#!BuildTag: nvidia/driver-combined:%%DRIVER_VERSION%%-sles%OS_VERSION_ID_SP%
 #
 ARG SLES_VERSION
-FROM registry.suse.com/bci/golang:1.25 as build
-
+ARG DRIVER_VERSION
+FROM registry.suse.com/bci/bci-base:$SLES_VERSION as build
 ARG TARGETARCH
+ARG DRIVER_VERSION
+ENV DRIVER_VERSION=$DRIVER_VERSION
+# don't add repo on OBS
+#!ArchExcludedLine: x86_64 aarch64 ppc64le
+RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys ref cuda-sles
+
+RUN zypper --non-interactive in --auto-agree-with-licenses nvidia-driver-assistant && zypper --disable-system-resolvables --non-interactive in --auto-agree-with-licenses --download-only -C jq awk util-linux kmod "nvidia-persistenced = ${DRIVER_VERSION}" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
+
+RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
+    curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
+    chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux && \
+    ln -s /sbin/ldconfig /sbin/ldconfig.real
+
+# Add NGC DL license from the CUDA image
+RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE
 
 # Arg to indicate if driver type is either of passthrough(baremetal) or vgpu
 ARG DRIVER_TYPE=passthrough
 ENV DRIVER_TYPE=$DRIVER_TYPE
 
-RUN zypper --gpg-auto-import-keys --non-interactive install -y git-core wget tar gzip
 
-WORKDIR /work
+FROM nvidia/driver-open:$DRIVER_VERSION-sles${SLES_VERSION} as driver-open
 
-RUN if [ "$DRIVER_TYPE" = "vgpu" ]; then \
-    git clone https://github.com/NVIDIA/gpu-driver-container driver && \
-    cd driver/vgpu/src && \
-    go build -o vgpu-util && \
-    mv vgpu-util /work; fi
 
-FROM registry.suse.com/bci/bci-base:$SLES_VERSION as driver
-ARG SLES_VERSION
-ARG TARGETARCH
-ENV TARGETARCH=$TARGETARCH
 ARG DRIVER_VERSION
-ENV DRIVER_VERSION=$DRIVER_VERSION
+FROM nvidia/driver-closed:$DRIVER_VERSION-sles$SLES_VERSION as driver-closed
 
-# don't add repo on OBS
-#!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
-
-# we need nvidia-open-driver-G06-signed-kmp-meta to get the modalias supplements for open driver
-RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" "nvidia-open-driver-G06 = ${DRIVER_VERSION}" && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
-    zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" && \
-    for dir in /lib/modules/*; do \
-    if [ -d "$dir/weak-updates" ]; then \
-    rm -rf "$dir"; \
-    fi \
-    done && \
-    cp -rfx /lib/modules/*/updates /opt/open && \
-    zypper --non-interactive rm nvidia-open-signed-kmp && \
-    zypper --non-interactive in --auto-agree-with-licenses "nvidia-driver-G06 = ${DRIVER_VERSION}" nvidia-driver-assistant && \
-    dkms  autoinstall -k $(ls -1 /lib/modules/) && \
-    for dir in /lib/modules/*; do \
-    if [ -d "$dir/weak-updates" ]; then \
-    rm -rf "$dir"; \
-    fi \
-    done && \
-    cp -rfx /lib/modules/*/updates /opt/proprietary
-
-FROM registry.suse.com/bci/bci-base:$SLES_VERSION
 
 ARG SLES_VERSION
-#ARG BASE_URL=http://us.download.nvidia.com/XFree86/Linux-x86_64
+FROM registry.suse.com/bci/bci-minimal:$SLES_VERSION
+
+ARG SLES_VERSION
 ARG TARGETARCH
 ENV TARGETARCH=$TARGETARCH
 ARG DRIVER_VERSION
@@ -76,65 +59,29 @@ ENV NVIDIA_VISIBLE_DEVICES=void
 
 RUN echo "TARGETARCH=$TARGETARCH"
 
-# don't add repo on OBS
-#!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod || true
-
 #RUN /tmp/install.sh depinstall
 
-
-RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
-    curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
-    chmod +x /usr/local/bin/donkey /usr/local/bin/extract-vmlinux && \
-    ln -s /sbin/ldconfig /sbin/ldconfig.real
+COPY --chmod=755 --from=build /usr/local/bin/ /usr/local/bin/
 
 
 COPY --chmod=755 nvidia-driver* /usr/local/bin
 
-#COPY --from=build /work/vgpu-util* /usr/local/bin
-
 ADD drivers drivers/
 
-COPY --from=driver /opt /opt
-
-COPY --from=driver /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json
-
-# get driver into rpmdb to access its modalias list
-COPY --from=driver /var/cache/rpms/*.rpm /tmp
-RUN rpm -Uvh --justdb --nodeps /tmp/*.rpm
-
-# Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
-#RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
-# zypper --gpg-auto-import-keys --non-interactive ref && \
-# #    zypper  --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
-# zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
-# for dir in /lib/modules/*; do \
-# if [ -d "$dir/weak-updates" ]; then \
-# rm -rf "$dir"; \
-# fi \
-# done && \
-# mkdir -p /opt/lib/open && mv /lib/modules /opt/open && \
-# zypper --non-interactive rm nvidia-open-driver-G06-signed-cuda-kmp-default && \
-# zypper --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
-# for dir in /lib/modules/*; do \
-# if [ -d "$dir/weak-updates" ]; then \
-# rm -rf "$dir"; \
-# fi \
-# done && \
-# mkdir -p /opt/lib/proprietary && mv /lib/modules /opt/proprietary && \
-# rpm -e nvidia-driver-G06-kmp-default && \
-# rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd dbus-1 elfutils file iputils kbd kernel-default-devel libapparmor1 libcryptsetup12 libip4tc2 libkcapi-tools libseccomp2 mokutil pam-config pciutils pigz system-group-kvm systemd-default-settings systemd-default-settings-branding-SLE \
-# ; fi
-
-RUN zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-compute-G06 = ${DRIVER_VERSION}-1" "nvidia-persistenced = ${DRIVER_VERSION}-1" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}-1" && \
-    for pkg in systemd dbus-1 kbd libapparmor1 libip4tc2 libkmod2 libseccomp2 pam-config pkg-config systemd-default-settings libdbus-1-3 libexpat1 systemd-default-settings-branding-SLE systemd-presets-branding-SLE systemd-presets-common-SUSE; do rpm -e --nodeps "$pkg" || true; done
+COPY --from=driver-open /opt /opt
+COPY --from=driver-closed /opt /opt
 RUN mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/
 
-RUN zypper removerepo cuda-sles
+COPY --from=build /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json
+
+#COPY --from=build /var/cache/zypp/packages/cuda-sles/ /var/cache/rpms/
+COPY --from=build /var/cache/zypp/packages/*/*/ /var/cache/rpms/
+
+RUN rpm -Uvh --nodeps /var/cache/rpms/update-alternatives*rpm /var/cache/rpms/grep*.rpm /var/cache/rpms/libpcre1*rpm /var/cache/rpms/*jq*rpm /var/cache/rpms/libonig*rpm /var/cache/rpms/gawk*rpm && rpm -Uvh --nodeps  /var/cache/rpms/util-linux*.rpm /var/cache/rpms/nvidia-persistenced-${DRIVER_VERSION}*.rpm /var/cache/rpms/nvidia-compute-utils-G06-${DRIVER_VERSION}*.rpm /var/cache/rpms/libnvidia-ml-${DRIVER_VERSION}*.rpm /var/cache/rpms/libnvidia-cfg*${DRIVER_VERSION}*.rpm && \
+    rm -fr /var/cache/rpms
 
 # cleanup logs and temporary files
-RUN set -euo pipefail;  zypper -n --installroot /target clean -a; \
-    rm -rf {/target,}/var/log/{alternatives.log,lastlog,tallylog,zypper.log,zypp/history,YaST2}; \
+RUN set -euo pipefail; rm -rf {/target,}/var/log/{alternatives.log,lastlog,tallylog,zypper.log,zypp/history,YaST2}; \
     rm -rf {/target,}/run/*; \
     rm -f {/target,}/etc/{shadow-,group-,passwd-,.pwd.lock}; \
     rm -f {/target,}/usr/lib/sysimage/rpm/.rpm.lock; \
@@ -143,10 +90,7 @@ RUN set -euo pipefail;  zypper -n --installroot /target clean -a; \
 
 WORKDIR /drivers
 
-#ARG PUBLIC_KEY=empty
-#COPY ${PUBLIC_KEY} kernel/pubkey.x509
 
-ARG PRIVATE_KEY
 ARG KERNEL_VERSION=latest
 
 LABEL io.k8s.display-name="NVIDIA Driver Container"
@@ -157,7 +101,7 @@ LABEL release="N/A"
 LABEL summary="Provision the NVIDIA driver through containers"
 LABEL description="See summary"
 
-# Add NGC DL license from the CUDA image
-RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE
+COPY --from=build /licenses/NGC-DL-CONTAINER-LICENSE /licenses
+
 
 ENTRYPOINT ["/usr/local/bin/nvidia-driver", "load"]
