@@ -87,7 +87,7 @@ COPY --from=builder /usr/share/nvidia-driver-assistant/supported-gpus/supported-
 
 COPY --from=builder /var/cache/zypp/packages/cuda-sles/ /var/cache/rpms/
 
-RUN rpm -Uvh --nodeps /var/cache/rpms/nvidia-compute-utils-G06-${DRIVER_VERSION}*.rpm /var/cache/rpms/libnvidia-ml-${DRIVER_VERSION}*.rpm && \
+RUN rpm -Uvh --nodeps /var/cache/rpms/nvidia-compute*G06*${DRIVER_VERSION}*.rpm /var/cache/rpms/libnvidia-ml-${DRIVER_VERSION}*.rpm && \
     rm -fr /var/cache/rpms
 
 # cleanup logs and temporary files
