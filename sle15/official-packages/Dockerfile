@@ -9,7 +9,7 @@ COPY --from=target / /target
 
 RUN set -euo pipefail; \
     export CHKSTAT_ALLOW_INSECURE_MODE_IF_NO_PROC=1; \
-    zypper -n --installroot /target --gpg-auto-import-keys install --no-recommends jq awk util-linux kmod
+    zypper -n --installroot /target --gpg-auto-import-keys install --no-recommends jq awk util-linux util-linux-systemd kmod
 
 ARG TARGETARCH
 ARG DRIVER_VERSION
