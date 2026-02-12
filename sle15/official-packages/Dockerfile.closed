@@ -20,5 +20,5 @@ RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-driver-G06 = 
     rm -rf "$dir"; \
     fi \
     done && \
-    cp -rfx /lib/modules/*/updates /opt/proprietary
-
+    cp -rfx /lib/modules/*/updates /opt/proprietary && \
+    mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/

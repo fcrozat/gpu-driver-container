@@ -82,7 +82,6 @@ ADD drivers drivers/
 
 COPY --from=driver-open /opt /opt
 COPY --from=driver-closed /opt /opt
-RUN mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/
 
 COPY --from=builder /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json
 
