@@ -3,7 +3,14 @@
 #
 ARG SLES_VERSION
 ARG DRIVER_VERSION
-FROM registry.suse.com/bci/bci-base:$SLES_VERSION as build
+FROM registry.suse.com/bci/bci-micro:$SLES_VERSION AS target
+FROM registry.suse.com/bci/bci-base:$SLES_VERSION as builder
+COPY --from=target / /target
+
+RUN set -euo pipefail; \
+    export CHKSTAT_ALLOW_INSECURE_MODE_IF_NO_PROC=1; \
+    zypper -n --installroot /target --gpg-auto-import-keys install --no-recommends jq awk util-linux kmod
+
 ARG TARGETARCH
 ARG DRIVER_VERSION
 ENV DRIVER_VERSION=$DRIVER_VERSION
@@ -11,7 +18,10 @@ ENV DRIVER_VERSION=$DRIVER_VERSION
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
 RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys ref cuda-sles
 
-RUN zypper --non-interactive in --auto-agree-with-licenses nvidia-driver-assistant && zypper --disable-system-resolvables --non-interactive in --auto-agree-with-licenses --download-only -C jq awk util-linux kmod "nvidia-persistenced = ${DRIVER_VERSION}" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
+RUN set -euo pipefail; \
+    export CHKSTAT_ALLOW_INSECURE_MODE_IF_NO_PROC=1; \
+    zypper -n --installroot /target --gpg-auto-import-keys install --no-recommends -C "nvidia-persistenced = ${DRIVER_VERSION}" jq awk util-linux kmod
+RUN zypper --non-interactive in --auto-agree-with-licenses nvidia-driver-assistant && zypper --disable-system-resolvables --non-interactive in --auto-agree-with-licenses --download-only -C "nvidia-compute-utils-G06 = ${DRIVER_VERSION}"
 
 RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
     curl -fsSL -o /usr/local/bin/extract-vmlinux https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux && \
@@ -20,6 +30,9 @@ RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/
 
 # Add NGC DL license from the CUDA image
 RUN mkdir /licenses && curl -fsSL -o /licenses/NGC-DL-CONTAINER-LICENSE https://gitlab.com/nvidia/container-images/cuda/-/raw/master/NGC-DL-CONTAINER-LICENSE
+
+# set the day of last password change to empty
+RUN set -euo pipefail; sed -i 's/^\([^:]*:[^:]*:\)[^:]*\(:.*\)$/\1\2/' /target/etc/shadow
 
 # Arg to indicate if driver type is either of passthrough(baremetal) or vgpu
 ARG DRIVER_TYPE=passthrough
@@ -34,8 +47,8 @@ FROM localhost/nvidia/driver-closed:$DRIVER_VERSION-sles$SLES_VERSION as driver-
 
 
 ARG SLES_VERSION
-FROM registry.suse.com/bci/bci-minimal:$SLES_VERSION
-
+FROM registry.suse.com/bci/bci-micro:$SLES_VERSION
+COPY --from=builder /target /
 ARG SLES_VERSION
 ARG TARGETARCH
 ENV TARGETARCH=$TARGETARCH
@@ -61,8 +74,7 @@ RUN echo "TARGETARCH=$TARGETARCH"
 
 #RUN /tmp/install.sh depinstall
 
-COPY --chmod=755 --from=build /usr/local/bin/ /usr/local/bin/
-
+COPY --chmod=755 --from=builder /usr/local/bin/ /usr/local/bin/
 
 COPY --chmod=755 nvidia-driver* /usr/local/bin
 
@@ -72,12 +84,11 @@ COPY --from=driver-open /opt /opt
 COPY --from=driver-closed /opt /opt
 RUN mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/
 
-COPY --from=build /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json
+COPY --from=builder /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json
 
-#COPY --from=build /var/cache/zypp/packages/cuda-sles/ /var/cache/rpms/
-COPY --from=build /var/cache/zypp/packages/*/*/ /var/cache/rpms/
+COPY --from=builder /var/cache/zypp/packages/cuda-sles/ /var/cache/rpms/
 
-RUN rpm -Uvh --nodeps /var/cache/rpms/update-alternatives*rpm /var/cache/rpms/grep*.rpm /var/cache/rpms/libpcre1*rpm /var/cache/rpms/*jq*rpm /var/cache/rpms/libonig*rpm /var/cache/rpms/gawk*rpm && rpm -Uvh --nodeps  /var/cache/rpms/util-linux*.rpm /var/cache/rpms/nvidia-persistenced-${DRIVER_VERSION}*.rpm /var/cache/rpms/nvidia-compute-utils-G06-${DRIVER_VERSION}*.rpm /var/cache/rpms/libnvidia-ml-${DRIVER_VERSION}*.rpm /var/cache/rpms/libnvidia-cfg*${DRIVER_VERSION}*.rpm && \
+RUN rpm -Uvh --nodeps /var/cache/rpms/nvidia-compute-utils-G06-${DRIVER_VERSION}*.rpm /var/cache/rpms/libnvidia-ml-${DRIVER_VERSION}*.rpm && \
     rm -fr /var/cache/rpms
 
 # cleanup logs and temporary files
@@ -101,7 +112,7 @@ LABEL release="N/A"
 LABEL summary="Provision the NVIDIA driver through containers"
 LABEL description="See summary"
 
-COPY --from=build /licenses/NGC-DL-CONTAINER-LICENSE /licenses
+COPY --from=builder /licenses/NGC-DL-CONTAINER-LICENSE /licenses
 
 
 ENTRYPOINT ["/usr/local/bin/nvidia-driver", "load"]
