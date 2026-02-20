@@ -574,6 +574,7 @@ _load() {
 
 init() {
     _prepare_exclusive
+    _update_ca_certificates
     _load
 }
 
