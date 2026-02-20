@@ -102,11 +102,6 @@ _load_driver() {
             echo "         Retaining the current configuration"
         else
             echo -n "$nv_fw_search_path" > $fw_path_config_file || echo "WARNING: Failed to configure the firmware search path"
-            if [ -d "/opt/lib/firmware/nvidia/${DRIVER_VERSION}" ]; then
-                rm -rf $nv_fw_search_path/nvidia/${DRIVER_VERSION}
-                mkdir -p $nv_fw_search_path/nvidia/${DRIVER_VERSION}
-                cp /opt/lib/firmware/nvidia/${DRIVER_VERSION}/gsp_*.bin $nv_fw_search_path/nvidia/${DRIVER_VERSION}
-            fi
         fi
     fi
 
@@ -415,7 +410,14 @@ _prepare_exclusive() {
 _load() {
     _load_driver
     _mount_rootfs
-    _write_kernel_update_hook
+
+    local nv_fw_search_path="$RUN_DIR/driver/lib/firmware"
+    if [ -d "/opt/lib/firmware/nvidia/${DRIVER_VERSION}" ]; then
+        echo "Copying NVIDIA GPU firmware..."
+        rm -rf $nv_fw_search_path/nvidia/${DRIVER_VERSION}
+        mkdir -p $nv_fw_search_path/nvidia/${DRIVER_VERSION}
+        cp /opt/lib/firmware/nvidia/${DRIVER_VERSION}/gsp_*.bin $nv_fw_search_path/nvidia/${DRIVER_VERSION}
+    fi
 
     echo "Done, now waiting for signal"
     sleep infinity &
