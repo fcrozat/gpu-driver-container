@@ -170,7 +170,7 @@ _unload_driver() {
     echo "Stopping NVIDIA persistence daemon..."
         local pid=$(< /var/run/nvidia-persistenced/nvidia-persistenced.pid)
 
-        kill -SIGTERM "${pid}"
+        kill -SIGTERM "${pid}" 2>/dev/null || true
         for i in $(seq 1 50); do
             kill -0 "${pid}" 2> /dev/null || break
             sleep 0.1
@@ -185,7 +185,7 @@ _unload_driver() {
         echo "Stopping NVIDIA grid daemon..."
         local pid=$(< /var/run/nvidia-gridd/nvidia-gridd.pid)
 
-        kill -SIGTERM "${pid}"
+        kill -SIGTERM "${pid}" 2>/dev/null || true
         for i in $(seq 1 50); do
             kill -0 "${pid}" 2> /dev/null || break
             sleep 0.1
@@ -200,7 +200,7 @@ _unload_driver() {
         echo "Stopping NVIDIA fabric manager daemon..."
         local pid=$(< /var/run/nvidia-fabricmanager/nv-fabricmanager.pid)
 
-        kill -SIGTERM "${pid}"
+        kill -SIGTERM "${pid}" 2>/dev/null || true
         for i in $(seq 1 50); do
             kill -0 "${pid}" 2> /dev/null || break
             sleep 0.1
@@ -215,7 +215,7 @@ _unload_driver() {
         echo "Stopping NVLink Subnet Manager daemon..."
         local pid=$(< /var/run/nvidia-fabricmanager/nvlsm.pid)
 
-        kill -SIGTERM "${pid}"
+        kill -SIGTERM "${pid}" 2>/dev/null || true
         for i in $(seq 1 50); do
             kill -0 "${pid}" 2> /dev/null || break
             sleep 0.1
