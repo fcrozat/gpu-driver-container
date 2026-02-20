@@ -278,31 +278,10 @@ _unmount_rootfs() {
     fi
 }
 
-# Write a kernel postinst.d script to automatically precompile packages on kernel update (similar to DKMS).
-_write_kernel_update_hook() {
-    if [ ! -d ${KERNEL_UPDATE_HOOK%/*} ]; then
-        return
-    fi
-
-    echo "Writing kernel update hook..."
-    cat > ${KERNEL_UPDATE_HOOK} <<'EOF'
-#!/bin/bash
-
-set -eu
-trap 'echo "ERROR: Failed to update the NVIDIA driver" >&2; exit 0' ERR
-
-NVIDIA_DRIVER_PID=$(< /run/nvidia/nvidia-driver.pid)
-
-export "$(grep -z DRIVER_VERSION /proc/${NVIDIA_DRIVER_PID}/environ)"
-nsenter -t "${NVIDIA_DRIVER_PID}" -m -- nvidia-driver update --kernel "$1"
-EOF
-    chmod +x ${KERNEL_UPDATE_HOOK}
-}
-
 _shutdown() {
     if _unload_driver; then
         _unmount_rootfs
-        rm -f ${PID_FILE} ${KERNEL_UPDATE_HOOK}
+        rm -f ${PID_FILE}
         return 0
     fi
     return 1
