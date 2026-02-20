@@ -50,7 +50,9 @@ _get_module_params() {
     # Starting from R580, we need to enable the CDMM (Coherent Driver Memory Management) module parameter.
     # This prevents the GPU memory for coherent systems (GH200, GB200 etc) from being exposed as a NUMA node
     # and thereby preventing over-reporting of a Kubernetes node's memory. This is needed for Kubernetes use-cases
-    NVIDIA_MODULE_PARAMS+=("NVreg_CoherentGPUMemoryMode=driver")
+    if [[ "${DRIVER_BRANCH}" -ge 580 ]]; then
+        NVIDIA_MODULE_PARAMS+=("NVreg_CoherentGPUMemoryMode=driver")
+    fi
 
     # nvidia
     if [ -f "${base_path}/nvidia.conf" ]; then
