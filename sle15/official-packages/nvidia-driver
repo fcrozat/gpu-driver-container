@@ -450,11 +450,9 @@ case "${command}" in
 esac
 set -- ${options}
 
-ACCEPT_LICENSE=""
-
 while [ $# -gt 0 ]; do
     case "$1" in
-    -a | --accept-license) ACCEPT_LICENSE="yes"; shift ;;
+    -a | --accept-license) shift ;; # accepted for backward compatibility
     --) shift; break ;;
     *) break ;;
     esac
