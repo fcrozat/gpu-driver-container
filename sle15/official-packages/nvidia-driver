@@ -404,8 +404,10 @@ reload_nvidia_peermem() {
     if chroot /run/nvidia/driver modprobe nvidia-peermem "${NVIDIA_PEERMEM_MODULE_PARAMS[@]}"; then
         if [ -f /sys/module/nvidia_peermem/refcnt ]; then
             echo "successfully loaded nvidia-peermem module, now waiting for signal"
-            sleep inf
+            sleep infinity &
             trap "echo 'Caught signal'; exit 1" HUP INT QUIT PIPE TERM
+            while true; do wait $! || continue; done
+            exit 0
         fi
     fi
     echo "failed to load nvidia-peermem module"
