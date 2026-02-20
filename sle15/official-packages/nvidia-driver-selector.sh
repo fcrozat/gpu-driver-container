@@ -46,19 +46,7 @@ if [ ${#DETECTED_IDS[@]} -eq 0 ]; then
 fi
 
 # Build JSON array of detected IDs (normalized to 0xXXXX uppercase to match supported-gpus.json)
-DETECTED_JSON="["
-first=true
-for id in "${DETECTED_IDS[@]}"; do
-    # Normalize: 0x + uppercase hex
-    normalized_id=$(echo "$id" | awk '{print "0x" toupper(substr($0, 3))}')
-    if [ "$first" = true ]; then
-        DETECTED_JSON+="\"$normalized_id\""
-        first=false
-    else
-        DETECTED_JSON+=",\"$normalized_id\""
-    fi
-done
-DETECTED_JSON+="]"
+DETECTED_JSON=$(printf '%s\n' "${DETECTED_IDS[@]}" | jq -R . | jq -s -c 'map("0x" + (.[2:] | ascii_upcase))')
 
 # Use jq to implement the decision logic
 # Using single line to avoid any potential here-doc/newline issues in this environment
