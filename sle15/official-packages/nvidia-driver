@@ -443,16 +443,13 @@ if [ $# -eq 0 ]; then
 fi
 command=$1; shift
 case "${command}" in
-    init) options=$(getopt -l accept-license -o a -- "$@") ;;
+    init) options=$(getopt -l accept-license -o a -- "$@") || usage ;;
     load) options="" ;;
     reload_nvidia_peermem) options="" ;;
     probe_nvidia_peermem) options="" ;;
     *) usage ;;
 esac
-if [ $? -ne 0 ]; then
-    usage
-fi
-eval set -- "${options}"
+set -- ${options}
 
 ACCEPT_LICENSE=""
 
