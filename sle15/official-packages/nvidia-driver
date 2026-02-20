@@ -182,31 +182,6 @@ _assert_nvswitch_system() {
     return 0
 }
 
-_assert_nvlink5_system() (
-    for dir in /sys/class/infiniband/*/device; do
-        # Define the path to the VPD file
-        vpd_file="$dir/vpd"
-
-        # Check if the VPD file exists
-        if [ -f "$vpd_file" ]; then
-            # Search for 'SW_MNG' in the VPD file
-            if grep -q "SW_MNG" "$vpd_file"; then
-                echo "Detected NVLink5+ system"
-                return 0
-            fi
-        fi
-    done
-    return 1
-)
-
-_ensure_nvlink5_prerequisites() (
-    until  lsmod | grep mlx5_core > /dev/null 2>&1 && lsmod | grep ib_umad > /dev/null 2>&1;
-    do
-        echo "waiting for the mlx5_core and ib_umad kernel modules to be loaded"
-        sleep 10
-    done
-)
-
 # For each kernel module configuration file mounted into the container,
 # parse the file contents and extract the custom module parameters that
 # are to be passed as input to 'modprobe'.
@@ -427,37 +402,6 @@ _unload_driver() {
         rmmod ${rmmod_args[@]}
     fi
     return 0
-}
-
-# Link and install the kernel modules from a precompiled package using the nvidia-installer.
-_install_driver() {
-    local install_args=()
-
-    echo "Installing NVIDIA driver kernel modules..."
-    cd /usr/src/nvidia-${DRIVER_VERSION}
-    rm -rf /lib/modules/${KERNEL_VERSION}/video
-
-    if [ "${ACCEPT_LICENSE}" = "yes" ]; then
-        install_args+=("--accept-license")
-    fi
-
-    # Specify the --skip-module-load flag for versions of the nvidia-installer that
-    # support it. From the nvidia-installer help output:
-    #
-    #    --skip-module-load
-    #         Skip the test load of the NVIDIA kernel modules after the modules are built,
-    #         and skip loading them after installation is complete.
-    #
-    # Without this flag, a subtle bug can occur if the nvidia-installer fails to unload
-    # the NVIDIA kernel modules after the test load. The modules will remain loaded and
-    # any custom NVIDIA module parameters configured as input to the driver container
-    # will not be applied.
-    #
-    if [ "${DRIVER_BRANCH}" -ge "550" ]; then
-        install_args+=("--skip-module-load")
-    fi
-
-    nvidia-installer --kernel-module-only --no-drm --ui=none --no-nouveau-check ${install_args[@]+"${install_args[@]}"} ${install_args[@]+"${install_args[@]}"}
 }
 
 # Mount the driver rootfs into the run directory with the exception of sysfs.
