@@ -15,7 +15,8 @@ NVIDIA_PEERMEM_MODULE_PARAMS=()
 KERNEL_MODULE_TYPE=${KERNEL_MODULE_TYPE:-auto}
 
 TARGETARCH=${TARGETARCH:-$(uname -m)}
-DRIVER_ARCH=${TARGETARCH/amd64/x86_64} && DRIVER_ARCH=${DRIVER_ARCH/arm64/aarch64}
+DRIVER_ARCH=${TARGETARCH/amd64/x86_64}
+DRIVER_ARCH=${DRIVER_ARCH/arm64/aarch64}
 echo "DRIVER_ARCH is $DRIVER_ARCH"
 
 _update_ca_certificates() {
@@ -26,7 +27,7 @@ _update_ca_certificates() {
 
 _assert_nvswitch_system() {
     [ -d /proc/driver/nvidia-nvswitch ] || return 1
-    entries=$(ls -1 /proc/driver/nvidia-nvswitch/devices/*)
+    entries=$(ls -1 /proc/driver/nvidia-nvswitch/devices/* 2>/dev/null)
     if [ -z "${entries}" ]; then
         return 1
     fi
@@ -53,29 +54,29 @@ _get_module_params() {
 
     # nvidia
     if [ -f "${base_path}/nvidia.conf" ]; then
-       while IFS="" read -r param || [ -n "$param" ]; do
-           NVIDIA_MODULE_PARAMS+=("$param")
+       while read -r -a params || [ -n "${params[*]}" ]; do
+           NVIDIA_MODULE_PARAMS+=("${params[@]}")
        done <"${base_path}/nvidia.conf"
        echo "Module parameters provided for nvidia: ${NVIDIA_MODULE_PARAMS[@]}"
     fi
     # nvidia-uvm
     if [ -f "${base_path}/nvidia-uvm.conf" ]; then
-       while IFS="" read -r param || [ -n "$param" ]; do
-           NVIDIA_UVM_MODULE_PARAMS+=("$param")
+       while read -r -a params || [ -n "${params[*]}" ]; do
+           NVIDIA_UVM_MODULE_PARAMS+=("${params[@]}")
        done <"${base_path}/nvidia-uvm.conf"
        echo "Module parameters provided for nvidia-uvm: ${NVIDIA_UVM_MODULE_PARAMS[@]}"
     fi
     # nvidia-modeset
     if [ -f "${base_path}/nvidia-modeset.conf" ]; then
-       while IFS="" read -r param || [ -n "$param" ]; do
-           NVIDIA_MODESET_MODULE_PARAMS+=("$param")
+       while read -r -a params || [ -n "${params[*]}" ]; do
+           NVIDIA_MODESET_MODULE_PARAMS+=("${params[@]}")
        done <"${base_path}/nvidia-modeset.conf"
        echo "Module parameters provided for nvidia-modeset: ${NVIDIA_MODESET_MODULE_PARAMS[@]}"
     fi
     # nvidia-peermem
     if [ -f "${base_path}/nvidia-peermem.conf" ]; then
-       while IFS="" read -r param || [ -n "$param" ]; do
-           NVIDIA_PEERMEM_MODULE_PARAMS+=("$param")
+       while read -r -a params || [ -n "${params[*]}" ]; do
+           NVIDIA_PEERMEM_MODULE_PARAMS+=("${params[@]}")
        done <"${base_path}/nvidia-peermem.conf"
        echo "Module parameters provided for nvidia-peermem: ${NVIDIA_PEERMEM_MODULE_PARAMS[@]}"
     fi
@@ -115,7 +116,7 @@ _load_driver() {
     mkdir -p /lib/modules/${current_kernel}/updates
     cp -fx /opt/${KERNEL_TYPE}/* /lib/modules/${current_kernel}/updates
     # do not ship drm driver
-    rm /lib/modules/${current_kernel}/updates/nvidia-drm.*
+    rm -f /lib/modules/${current_kernel}/updates/nvidia-drm.*
     depmod -a
 
     echo "Loading ipmi and i2c_core kernel modules..."
@@ -485,10 +486,11 @@ eval set -- "${options}"
 
 ACCEPT_LICENSE=""
 
-for opt in ${options}; do
-    case "$opt" in
-    -a | --accept-license) ACCEPT_LICENSE="yes"; shift 1 ;;
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -a | --accept-license) ACCEPT_LICENSE="yes"; shift ;;
     --) shift; break ;;
+    *) break ;;
     esac
 done
 if [ $# -ne 0 ]; then
