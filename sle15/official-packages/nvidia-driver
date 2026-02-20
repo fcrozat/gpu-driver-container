@@ -20,7 +20,7 @@ DRIVER_ARCH=${DRIVER_ARCH/arm64/aarch64}
 echo "DRIVER_ARCH is $DRIVER_ARCH"
 
 _update_ca_certificates() {
-    if [ ! -z "$(ls -A /etc/pki/trust/anchors)" ]; then
+    if [ -d /etc/pki/trust/anchors ] && [ -n "$(ls -A /etc/pki/trust/anchors)" ]; then
         update-ca-certificates
     fi
 }
