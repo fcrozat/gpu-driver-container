@@ -128,7 +128,7 @@ RUN rpm -Uvh --justdb --nodeps /tmp/*.rpm
 
 RUN zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-compute-G06 = ${DRIVER_VERSION}-1" "nvidia-persistenced = ${DRIVER_VERSION}-1" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}-1" && \
     for pkg in systemd dbus-1 kbd libapparmor1 libip4tc2 libkmod2 libseccomp2 pam-config pkg-config systemd-default-settings libdbus-1-3 libexpat1 systemd-default-settings-branding-SLE systemd-presets-branding-SLE systemd-presets-common-SUSE; do rpm -e --nodeps "$pkg" || true; done
-RUN mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/
+#RUN mkdir -p /opt/lib && cp -r /lib/firmware /opt/lib/
 
 RUN zypper removerepo cuda-sles
 
