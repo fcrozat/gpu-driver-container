@@ -135,6 +135,7 @@ RUN zypper removerepo cuda-sles
 RUN set -euo pipefail;  zypper -n --installroot /target clean -a; \
     rm -rf {/target,}/var/log/{alternatives.log,lastlog,tallylog,zypper.log,zypp/history,YaST2}; \
     rm -rf {/target,}/run/*; \
+    rm -rf {/target,}/tmp/*; \
     rm -f {/target,}/etc/{shadow-,group-,passwd-,.pwd.lock}; \
     rm -f {/target,}/usr/lib/sysimage/rpm/.rpm.lock; \
     rm -f {/target,}/var/cache/ldconfig/aux-cache; \
