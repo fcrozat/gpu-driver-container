@@ -31,7 +31,6 @@ ENV DRIVER_VERSION=$DRIVER_VERSION
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
 RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
 
-# we need nvidia-open-driver-G06-signed-kmp-meta to get the modalias supplements for open driver
 RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" "nvidia-open-driver-G06 = ${DRIVER_VERSION}" && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
     zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" && \
     for dir in /lib/modules/*; do \
@@ -126,7 +125,7 @@ RUN rpm -Uvh --justdb --nodeps /tmp/*.rpm
 # rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd dbus-1 elfutils file iputils kbd kernel-default-devel libapparmor1 libcryptsetup12 libip4tc2 libkcapi-tools libseccomp2 mokutil pam-config pciutils pigz system-group-kvm systemd-default-settings systemd-default-settings-branding-SLE \
 # ; fi
 
-RUN zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-compute-G06 = ${DRIVER_VERSION}-1" "nvidia-persistenced = ${DRIVER_VERSION}-1" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}-1" && \
+RUN zypper --non-interactive in --auto-agree-with-licenses -C jq "nvidia-compute-G06 = ${DRIVER_VERSION}-1" "nvidia-persistenced = ${DRIVER_VERSION}-1" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}-1" && \
     for pkg in systemd dbus-1 kbd libapparmor1 libip4tc2 libkmod2 libseccomp2 pam-config pkg-config systemd-default-settings libdbus-1-3 libexpat1 systemd-default-settings-branding-SLE systemd-presets-branding-SLE systemd-presets-common-SUSE; do rpm -e --nodeps "$pkg" || true; done
 RUN mkdir -p /opt/lib && mv /lib/firmware /opt/lib/
 
