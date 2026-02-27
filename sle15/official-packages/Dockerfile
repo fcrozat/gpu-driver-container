@@ -29,17 +29,17 @@ ENV DRIVER_VERSION=$DRIVER_VERSION
 
 # don't add repo on OBS
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils
+RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils dkms
 
-RUN zypper --non-interactive --disable-system-resolvables in --auto-agree-with-licenses  --download-only --no-recommends -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" "nvidia-open-driver-G06 = ${DRIVER_VERSION}" && mkdir -p /var/cache/rpms && find /var/cache -name 'nvidia-open-driver*-kmp*.rpm' -exec mv -t /var/cache/rpms/ {} + && \
-    zypper --non-interactive in --auto-agree-with-licenses -C "nvidia-open-signed-kmp = ${DRIVER_VERSION}" && \
+RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-open-driver-G06 = ${DRIVER_VERSION}" xz hostname && \
+    dkms  autoinstall -k $(ls -1 /lib/modules/) && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
     rm -rf "$dir"; \
     fi \
     done && \
     cp -rfx /lib/modules/*/updates /opt/open && \
-    zypper --non-interactive rm nvidia-open-signed-kmp && \
+    zypper --non-interactive rm nvidia-open-driver-G06 && \
     zypper --non-interactive in --auto-agree-with-licenses "nvidia-driver-G06 = ${DRIVER_VERSION}" nvidia-driver-assistant && \
     dkms  autoinstall -k $(ls -1 /lib/modules/) && \
     for dir in /lib/modules/*; do \
@@ -97,10 +97,6 @@ ADD drivers drivers/
 COPY --from=driver /opt /opt
 
 COPY --from=driver /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json /usr/share/nvidia-driver-assistant/supported-gpus/supported-gpus.json
-
-# get driver into rpmdb to access its modalias list
-COPY --from=driver /var/cache/rpms/*.rpm /tmp
-RUN rpm -Uvh --justdb --nodeps /tmp/*.rpm
 
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 #RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
