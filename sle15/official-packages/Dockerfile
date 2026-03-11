@@ -26,12 +26,16 @@ ARG TARGETARCH
 ENV TARGETARCH=$TARGETARCH
 ARG DRIVER_VERSION
 ENV DRIVER_VERSION=$DRIVER_VERSION
+ARG DRIVER_BRANCH=550
 
 # don't add repo on OBS
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils dkms
+RUN SLES_MAJOR=$(echo ${SLES_VERSION} | cut -d. -f1) && \
+    CUDA_REPO_PATH=$([ "${SLES_MAJOR}" = "16" ] && echo "suse16" || echo "sles15") && \
+    zypper ar https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_REPO_PATH}/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive ref && zypper --gpg-auto-import-keys --non-interactive install -y findutils dkms
 
-RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-open-driver-G06 = ${DRIVER_VERSION}" xz hostname && \
+RUN if [ "${DRIVER_BRANCH}" -ge 595 ] 2>/dev/null; then DRIVER_GENERATION=G07; else DRIVER_GENERATION=G06; fi && \
+    zypper --non-interactive in --auto-agree-with-licenses "nvidia-open-driver-${DRIVER_GENERATION} = ${DRIVER_VERSION}" xz hostname && \
     dkms  autoinstall -k $(ls -1 /lib/modules/) && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
@@ -39,8 +43,8 @@ RUN zypper --non-interactive in --auto-agree-with-licenses "nvidia-open-driver-G
     fi \
     done && \
     cp -rfx /lib/modules/*/updates /opt/open && \
-    zypper --non-interactive rm nvidia-open-driver-G06 && \
-    zypper --non-interactive in --auto-agree-with-licenses "nvidia-driver-G06 = ${DRIVER_VERSION}" nvidia-driver-assistant && \
+    zypper --non-interactive rm nvidia-open-driver-${DRIVER_GENERATION} && \
+    zypper --non-interactive in --auto-agree-with-licenses "nvidia-driver-${DRIVER_GENERATION} = ${DRIVER_VERSION}" nvidia-driver-assistant && \
     dkms  autoinstall -k $(ls -1 /lib/modules/) && \
     for dir in /lib/modules/*; do \
     if [ -d "$dir/weak-updates" ]; then \
@@ -77,7 +81,9 @@ RUN echo "TARGETARCH=$TARGETARCH"
 
 # don't add repo on OBS
 #!ArchExcludedLine: x86_64 aarch64 ppc64le
-RUN zypper ar https://developer.download.nvidia.com/compute/cuda/repos/sles15/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod || true
+RUN SLES_MAJOR=$(echo ${SLES_VERSION} | cut -d. -f1) && \
+    CUDA_REPO_PATH=$([ "${SLES_MAJOR}" = "16" ] && echo "suse16" || echo "sles15") && \
+    zypper ar https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_REPO_PATH}/${TARGETARCH/amd64/x86_64} cuda-sles && zypper --gpg-auto-import-keys --non-interactive install -y curl awk tar util-linux-systemd kmod || true
 
 #RUN /tmp/install.sh depinstall
 
@@ -101,27 +107,28 @@ COPY --from=driver /usr/share/nvidia-driver-assistant/supported-gpus/supported-g
 # Fetch the installer, fabricmanager and libnvidia-nscq automatically for passthrough/baremetal types
 #RUN if [ "$DRIVER_TYPE" != "vgpu" ]; then \
 # zypper --gpg-auto-import-keys --non-interactive ref && \
-# #    zypper  --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
-# zypper  --non-interactive in -C "nvidia-open-driver-G06-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
+# #    zypper  --non-interactive in -C "nvidia-driver-${DRIVER_GENERATION}-kmp-default = ${DRIVER_VERSION}" && \
+# zypper  --non-interactive in -C "nvidia-open-driver-${DRIVER_GENERATION}-signed-cuda-kmp-default = ${DRIVER_VERSION}" && \
 # for dir in /lib/modules/*; do \
 # if [ -d "$dir/weak-updates" ]; then \
 # rm -rf "$dir"; \
 # fi \
 # done && \
 # mkdir -p /opt/lib/open && mv /lib/modules /opt/open && \
-# zypper --non-interactive rm nvidia-open-driver-G06-signed-cuda-kmp-default && \
-# zypper --non-interactive in -C "nvidia-driver-G06-kmp-default = ${DRIVER_VERSION}" && \
+# zypper --non-interactive rm nvidia-open-driver-${DRIVER_GENERATION}-signed-cuda-kmp-default && \
+# zypper --non-interactive in -C "nvidia-driver-${DRIVER_GENERATION}-kmp-default = ${DRIVER_VERSION}" && \
 # for dir in /lib/modules/*; do \
 # if [ -d "$dir/weak-updates" ]; then \
 # rm -rf "$dir"; \
 # fi \
 # done && \
 # mkdir -p /opt/lib/proprietary && mv /lib/modules /opt/proprietary && \
-# rpm -e nvidia-driver-G06-kmp-default && \
+# rpm -e nvidia-driver-${DRIVER_GENERATION}-kmp-default && \
 # rpm -e --nodeps kernel-default udev dracut dracut-fips perl-Bootloader systemd util-linux-systemd dbus-1 elfutils file iputils kbd kernel-default-devel libapparmor1 libcryptsetup12 libip4tc2 libkcapi-tools libseccomp2 mokutil pam-config pciutils pigz system-group-kvm systemd-default-settings systemd-default-settings-branding-SLE \
 # ; fi
 
-RUN zypper --non-interactive in --auto-agree-with-licenses -C jq "nvidia-compute-G06 = ${DRIVER_VERSION}-1" "nvidia-persistenced = ${DRIVER_VERSION}-1" "nvidia-compute-utils-G06 = ${DRIVER_VERSION}-1" && \
+RUN if [ "${DRIVER_BRANCH}" -ge 595 ] 2>/dev/null; then DRIVER_GENERATION=G07; else DRIVER_GENERATION=G06; fi && \
+    zypper --non-interactive in --auto-agree-with-licenses -C jq "nvidia-compute-${DRIVER_GENERATION} = ${DRIVER_VERSION}-1" "nvidia-persistenced = ${DRIVER_VERSION}-1" "nvidia-compute-utils-${DRIVER_GENERATION} = ${DRIVER_VERSION}-1" && \
     for pkg in systemd dbus-1 kbd libapparmor1 libip4tc2 libkmod2 libseccomp2 pam-config pkg-config systemd-default-settings libdbus-1-3 libexpat1 systemd-default-settings-branding-SLE systemd-presets-branding-SLE systemd-presets-common-SUSE; do rpm -e --nodeps "$pkg" || true; done
 RUN mkdir -p /opt/lib && mv /lib/firmware /opt/lib/
 
