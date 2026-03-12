@@ -115,7 +115,7 @@ _load_driver() {
     fi
 
     local current_kernel=$(uname -r)
-    cp -rfx "/run/host/lib/modules/${current_kernel}" /lib/modules
+    cp -rfx "/run/host/lib/modules/${current_kernel}" /lib/modules || /bin/true
     mkdir -p "/lib/modules/${current_kernel}/updates"
     cp -fx "/opt/${KERNEL_TYPE}/"* "/lib/modules/${current_kernel}/updates"
     # do not ship drm driver
